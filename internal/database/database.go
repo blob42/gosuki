@@ -420,6 +420,7 @@ func registerSqliteHooks() {
 
 }
 
+//TODO!: manual initialization
 func init() {
 	initCache()
 	registerSqliteHooks()
