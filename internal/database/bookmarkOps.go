@@ -24,7 +24,7 @@ package database
 import (
 	"strings"
 
-	"git.blob42.xyz/gosuki/gosuki/pkg/bookmarks"
+	"github.com/blob42/gosuki/pkg/bookmarks"
 
 	sqlite3 "github.com/mattn/go-sqlite3"
 )

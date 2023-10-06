@@ -41,13 +41,13 @@ import (
 
 	"github.com/buger/jsonparser"
 
-	"git.blob42.xyz/gosuki/gosuki/hooks"
-	"git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
-	"git.blob42.xyz/gosuki/gosuki/pkg/tree"
-	"git.blob42.xyz/gosuki/gosuki/pkg/watch"
+	"github.com/blob42/gosuki/hooks"
+	"github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/tree"
+	"github.com/blob42/gosuki/pkg/watch"
 )
 
 var (

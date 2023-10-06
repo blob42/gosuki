@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/internal/utils"
 )
 
 const (

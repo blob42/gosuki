@@ -9,15 +9,15 @@ import (
 	"github.com/chenhg5/collection"
 	"github.com/stretchr/testify/assert"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/internal/index"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
-	"git.blob42.xyz/gosuki/gosuki/pkg/browsers/mozilla"
-	"git.blob42.xyz/gosuki/gosuki/pkg/parsing"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
-	"git.blob42.xyz/gosuki/gosuki/pkg/tree"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/index"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/browsers/mozilla"
+	"github.com/blob42/gosuki/pkg/parsing"
+	"github.com/blob42/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/tree"
+	"github.com/blob42/gosuki/internal/utils"
 )
 
 var ff Firefox

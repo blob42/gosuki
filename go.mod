@@ -1,4 +1,4 @@
-module git.blob42.xyz/gosuki/gosuki
+module github.com/blob42/gosuki
 
 go 1.21.1
 

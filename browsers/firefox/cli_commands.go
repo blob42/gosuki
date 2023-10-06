@@ -26,9 +26,9 @@ package firefox
 import (
 	"fmt"
 
-	"git.blob42.xyz/gosuki/gosuki/cmd"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/pkg/browsers/mozilla"
+	"github.com/blob42/gosuki/cmd"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/pkg/browsers/mozilla"
 
 	"github.com/urfave/cli/v2"
 )

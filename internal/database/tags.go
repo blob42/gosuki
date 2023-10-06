@@ -25,7 +25,7 @@ import (
 	"slices"
 	"strings"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/internal/utils"
 )
 
 type Tags struct {

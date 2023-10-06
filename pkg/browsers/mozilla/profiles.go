@@ -27,9 +27,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/utils"
+	"github.com/blob42/gosuki/pkg/profiles"
 
 	"github.com/go-ini/ini"
 )

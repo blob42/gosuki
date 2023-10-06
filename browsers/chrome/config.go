@@ -22,11 +22,11 @@
 package chrome
 
 import (
-	"git.blob42.xyz/gosuki/gosuki/internal/config"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
-	"git.blob42.xyz/gosuki/gosuki/pkg/parsing"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
-	"git.blob42.xyz/gosuki/gosuki/pkg/tree"
+	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/parsing"
+	"github.com/blob42/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/tree"
 )
 
 const (
