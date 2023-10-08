@@ -3,8 +3,8 @@ package mozilla
 import (
 	"testing"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/utils"
 	"github.com/gchaincl/dotsql"
 	_ "github.com/kr/pretty"
 	"github.com/swithek/dotsqlx"

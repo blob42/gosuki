@@ -24,8 +24,8 @@ package profiles
 
 import (
 
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/utils"
 )
 
 var log = logging.GetLogger("profiles")

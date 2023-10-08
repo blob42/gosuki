@@ -1,7 +1,7 @@
 package mozilla
 
 import (
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/profiles"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

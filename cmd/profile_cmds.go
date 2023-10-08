@@ -26,9 +26,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/internal/utils"
+	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/profiles"
 )
 
 

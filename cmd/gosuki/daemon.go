@@ -25,14 +25,14 @@ import (
 	"fmt"
 	"os"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/api"
-	db "git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
-	"git.blob42.xyz/gosuki/gosuki/pkg/watch"
+	"github.com/blob42/gosuki/internal/api"
+	db "github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/utils"
+	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/watch"
 
-	"git.blob42.xyz/gosuki/gosuki/pkg/manager"
+	"github.com/blob42/gosuki/pkg/manager"
 
 	"github.com/urfave/cli/v2"
 )

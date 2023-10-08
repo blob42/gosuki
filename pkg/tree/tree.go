@@ -24,10 +24,10 @@ package tree
 import (
 	"fmt"
 
-	"git.blob42.xyz/gosuki/gosuki/pkg/bookmarks"
-	"git.blob42.xyz/gosuki/gosuki/internal/index"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/pkg/bookmarks"
+	"github.com/blob42/gosuki/internal/index"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/utils"
 	"github.com/kr/pretty"
 
 	"github.com/xlab/treeprint"

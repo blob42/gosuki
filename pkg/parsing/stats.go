@@ -24,8 +24,8 @@ package parsing
 import (
 	"time"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/pkg/tree"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/pkg/tree"
 )
 
 type Node = tree.Node

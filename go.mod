@@ -1,6 +1,8 @@
-module git.blob42.xyz/gosuki/gosuki
+module github.com/blob42/gosuki
 
 go 1.21.1
+
+retract v0.0.1 // broken module path
 
 require (
 	github.com/BurntSushi/toml v1.2.1

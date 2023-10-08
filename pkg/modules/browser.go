@@ -25,15 +25,15 @@ import (
 	"fmt"
 	"time"
 
-	"git.blob42.xyz/gosuki/gosuki/hooks"
-	"git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/internal/index"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
-	"git.blob42.xyz/gosuki/gosuki/pkg/parsing"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
-	"git.blob42.xyz/gosuki/gosuki/pkg/tree"
-	"git.blob42.xyz/gosuki/gosuki/pkg/watch"
+	"github.com/blob42/gosuki/hooks"
+	"github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/index"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/utils"
+	"github.com/blob42/gosuki/pkg/parsing"
+	"github.com/blob42/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/tree"
+	"github.com/blob42/gosuki/pkg/watch"
 )
 
 var registeredBrowsers []BrowserModule

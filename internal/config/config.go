@@ -26,7 +26,7 @@ package config
 import (
 	"fmt"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/logging"
 
 	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"

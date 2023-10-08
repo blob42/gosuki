@@ -23,13 +23,13 @@
 package firefox
 
 import (
-	"git.blob42.xyz/gosuki/gosuki/internal/config"
-	"git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/pkg/browsers/mozilla"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
-	"git.blob42.xyz/gosuki/gosuki/pkg/parsing"
-	"git.blob42.xyz/gosuki/gosuki/pkg/profiles"
-	"git.blob42.xyz/gosuki/gosuki/pkg/tree"
+	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/pkg/browsers/mozilla"
+	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/parsing"
+	"github.com/blob42/gosuki/pkg/profiles"
+	"github.com/blob42/gosuki/pkg/tree"
 )
 
 const (

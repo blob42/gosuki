@@ -28,7 +28,7 @@ import (
 	"reflect"
 	"strings"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/logging"
 )
 
 var (

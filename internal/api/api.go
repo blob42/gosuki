@@ -30,10 +30,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/database"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/pkg/bookmarks"
-	"git.blob42.xyz/gosuki/gosuki/pkg/manager"
+	"github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/pkg/bookmarks"
+	"github.com/blob42/gosuki/pkg/manager"
 )
 
 type ApiServer struct {

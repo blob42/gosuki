@@ -25,19 +25,20 @@ package main
 import (
 	"os"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/config"
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
-	"git.blob42.xyz/gosuki/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/utils"
+	"github.com/blob42/gosuki/pkg/modules"
 
-	"git.blob42.xyz/gosuki/gosuki/cmd"
+	"github.com/blob42/gosuki/cmd"
 
 	"github.com/urfave/cli/v2"
 
 	// Load firefox browser modules
-	_ "git.blob42.xyz/gosuki/gosuki/browsers/firefox"
+	_ "github.com/blob42/gosuki/browsers/firefox"
+
 	// Load chrome browser module
-	_ "git.blob42.xyz/gosuki/gosuki/browsers/chrome"
+	_ "github.com/blob42/gosuki/browsers/chrome"
 )
 
 var log = logging.GetLogger("MAIN")
@@ -165,7 +166,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Debugf("flags: %s", app.Flags)
+	// log.Debugf("flags: %s", app.Flags)
 
 }
 

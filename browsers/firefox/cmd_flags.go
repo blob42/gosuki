@@ -24,9 +24,9 @@ package firefox
 import (
 	"strings"
 
-	"git.blob42.xyz/gosuki/gosuki/cmd"
-	"git.blob42.xyz/gosuki/gosuki/internal/config"
-	"git.blob42.xyz/gosuki/gosuki/internal/utils"
+	"github.com/blob42/gosuki/cmd"
+	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/internal/utils"
 
 	"github.com/gobuffalo/flect"
 	"github.com/urfave/cli/v2"

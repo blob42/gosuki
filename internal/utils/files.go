@@ -28,7 +28,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"git.blob42.xyz/gosuki/gosuki/internal/logging"
+	"github.com/blob42/gosuki/internal/logging"
 )
 
 var (
