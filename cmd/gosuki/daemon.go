@@ -136,7 +136,7 @@ func startDaemon(c *cli.Context) error {
 
 
 	// Initialize sqlite database available in global `cacheDB` variable
-	db.InitDB()
+	db.Init()
 
 	registeredBrowsers := modules.GetBrowserModules()
 

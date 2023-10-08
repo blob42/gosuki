@@ -27,8 +27,12 @@ import (
 	"github.com/blob42/gosuki/internal/utils"
 )
 
-func InitDB() {
+func Init() {
 	var err error
+
+	registerSqliteHooks()
+	initCache()
+	StartSyncScheduler()
 
 	// Check and initialize local db as last step
 	// browser bookmarks should already be in cache

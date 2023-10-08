@@ -20,7 +20,8 @@
 // gosuki.  If not, see <http://www.gnu.org/licenses/>.
 
 /// Signal management for unix
-/// +build !windows
+// +build !windows
+//go:build !windows
 
 package manager
 
