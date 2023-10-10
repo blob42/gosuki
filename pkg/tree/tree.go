@@ -24,11 +24,12 @@ package tree
 import (
 	"fmt"
 
-	"github.com/blob42/gosuki/pkg/bookmarks"
+	"github.com/kr/pretty"
+
+	"github.com/blob42/gosuki"
 	"github.com/blob42/gosuki/internal/index"
 	"github.com/blob42/gosuki/internal/logging"
 	"github.com/blob42/gosuki/internal/utils"
-	"github.com/kr/pretty"
 
 	"github.com/xlab/treeprint"
 )
@@ -261,13 +262,13 @@ func (node *Node) getTags() []string {
     return node.Tags
 }
 
-func (node *Node) GetBookmark() *bookmarks.Bookmark {
+func (node *Node) GetBookmark() *gosuki.Bookmark {
 
     if node.Type != URLNode {
         return nil
     }
 
-	return &bookmarks.Bookmark{
+	return &gosuki.Bookmark{
 		URL:      node.URL,
 		Metadata: node.Name,
 		Desc:     node.Desc,

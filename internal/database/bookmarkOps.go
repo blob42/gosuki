@@ -24,15 +24,14 @@ package database
 import (
 	"strings"
 
-	"github.com/blob42/gosuki/pkg/bookmarks"
-
+	"github.com/blob42/gosuki"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
 // Default separator used to join tags in the DB
 const TagSep = ","
 
-type Bookmark = bookmarks.Bookmark
+type Bookmark = gosuki.Bookmark
 
 func cleanup(f func() error) {
 	if err := f(); err != nil {

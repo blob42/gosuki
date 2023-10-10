@@ -30,9 +30,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/blob42/gosuki"
 	"github.com/blob42/gosuki/internal/database"
 	"github.com/blob42/gosuki/internal/logging"
-	"github.com/blob42/gosuki/pkg/bookmarks"
 	"github.com/blob42/gosuki/pkg/manager"
 )
 
@@ -40,7 +40,7 @@ type ApiServer struct {
 	http.Handler
 }
 
-type Bookmark = bookmarks.Bookmark
+type Bookmark = gosuki.Bookmark
 
 var log = logging.GetLogger("API")
 
