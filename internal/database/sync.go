@@ -28,6 +28,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	sqlite3 "github.com/mattn/go-sqlite3"
+
+	"github.com/blob42/gosuki/pkg/config"
 )
 
 var mu sync.Mutex

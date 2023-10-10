@@ -59,3 +59,5 @@ func SetupGlobalFlags() []cli.Flag {
 	return flags
 }
 
+
+//TODO: setup module flags

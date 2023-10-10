@@ -22,7 +22,7 @@
 package cmd
 
 import (
-	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/pkg/config"
 	"github.com/blob42/gosuki/internal/logging"
 
 	"github.com/kr/pretty"

@@ -23,7 +23,7 @@
 package firefox
 
 import (
-	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/pkg/config"
 	"github.com/blob42/gosuki/internal/database"
 	"github.com/blob42/gosuki/pkg/browsers/mozilla"
 	"github.com/blob42/gosuki/pkg/modules"

@@ -121,8 +121,26 @@ func RegisterGlobalOption(key string, val interface{}) {
 	configs[GlobalConfigName].Set(key, val)
 }
 
+// GetModuleOption returns a module option value given a module name and option name
+func GetModOpt(module string, opt string) (interface{}, error) {
+	if c, ok := configs[module]; ok {
+		return c.Get(opt)
+	}
+	return nil, fmt.Errorf("module %s not found", module)
+}
+
+// Regiser a module option ie. under [module] in toml file
+// If the module is not a configurator, a simple map[string]interface{} will be
+// created for it.
+
+//TODO: check if generics can be used here to avoid interface{} type
+//TODO: add support for option description that can be used in cli help
 func RegisterModuleOpt(module string, opt string, val interface{}) error {
 	log.Debugf("Setting option for module <%s>: %s = %v", module, opt, val)
+	if _, ok := configs[module]; !ok {
+		log.Debugf("Creating new default config for module <%s>", module)
+		configs[module] = make(Config)
+	}
 	dest := configs[module]
 	if err := dest.Set(opt, val); err != nil {
 		return err

@@ -22,7 +22,7 @@
 package main
 
 import (
-	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/pkg/config"
 )
 
 func initDefaultConfig() {

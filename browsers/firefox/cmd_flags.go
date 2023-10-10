@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"github.com/blob42/gosuki/cmd"
-	"github.com/blob42/gosuki/internal/config"
+	"github.com/blob42/gosuki/pkg/config"
 	"github.com/blob42/gosuki/internal/utils"
 
 	"github.com/gobuffalo/flect"
