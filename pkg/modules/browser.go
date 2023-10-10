@@ -224,12 +224,12 @@ type ProfileInitializer interface {
 	Init(*Context, *profiles.Profile) error
 }
 
-// Setup() is called for every browser module. It sets up the browser and calls
+// SetupBrowser() is called for every browser module. It sets up the browser and calls
 // the following methods if they are implemented by the module:
 //
 // 	1. [Initializer].Init() : state initialization
 // 	2. [Loader].Load(): Do the first loading of data (ex first loading of bookmarks )
-func Setup(browser BrowserModule, c *Context, p *profiles.Profile) error {
+func SetupBrowser(browser BrowserModule, c *Context, p *profiles.Profile) error {
 
 
 

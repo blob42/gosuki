@@ -81,7 +81,7 @@ const (
 	// flags: designed to be extended in future using bitwise masks
 	// Masks:
 	//     0b00000001: set title immutable ((do not change title when updating the bookmarks from the web ))
-	QCreateGosukiDBSchema = `
+	QCreateBookmarksTable = `
     CREATE TABLE if not exists bookmarks (
 		id integer PRIMARY KEY,
 		URL text NOT NULL UNIQUE,
@@ -286,7 +286,7 @@ func (db *DB) InitSchema() error {
 		return DBError{DBName: db.Name, Err: err}
 	}
 
-	stmt, err := tx.Prepare(QCreateGosukiDBSchema)
+	stmt, err := tx.Prepare(QCreateBookmarksTable)
 	if err != nil {
 		return DBError{DBName: db.Name, Err: err}
 	}

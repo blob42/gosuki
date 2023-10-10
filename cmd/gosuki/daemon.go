@@ -47,7 +47,7 @@ var startDaemonCmd = &cli.Command{
 }
 
 // Runs the module by calling the setup 
-func runModule(m *manager.Manager,
+func runBrowserModule(m *manager.Manager,
 				c *cli.Context,
 				browserMod modules.BrowserModule,
 				p *profiles.Profile) (error) {
@@ -90,7 +90,7 @@ func runModule(m *manager.Manager,
 		// calls the setup logic for each browser instance which
 		// includes the browsers.Initializer and browsers.Loader interfaces
 		//PERF:
-		err := modules.Setup(browser, modContext, p)
+		err := modules.SetupBrowser(browser, modContext, p)
 		if err != nil {
 			log.Errorf("setting up <%s> %v", browser.Config().Name, err)
 			return err
@@ -165,7 +165,7 @@ func startDaemon(c *cli.Context) error {
 					}
 					for _, p := range profs {
 						log.Debugf("profile: <%s>", p.Name)
-						err = runModule(manager, c, browserMod, p)
+						err = runBrowserModule(manager, c, browserMod, p)
 						if err != nil {
 							log.Critical(err)
 							continue
@@ -175,7 +175,7 @@ func startDaemon(c *cli.Context) error {
 			} else {
 				log.Debugf("profile manager <%s> not watching all profiles",
 				browser.Config().Name)
-				err := runModule(manager, c, browserMod, nil)
+				err := runBrowserModule(manager, c, browserMod, nil)
 				if err != nil {
 					log.Error(err)
 					continue
@@ -184,7 +184,7 @@ func startDaemon(c *cli.Context) error {
 		} else {
 			log.Warningf("module <%s> does not implement profiles.ProfileManager",
 			browser.Config().Name)
-			if err := runModule(manager, c, browserMod, nil); err != nil {
+			if err := runBrowserModule(manager, c, browserMod, nil); err != nil {
 				log.Error(err)
 				continue
 			}
