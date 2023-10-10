@@ -40,6 +40,13 @@ type CacheDB struct {
 	DB *DB
 }
 
+func GetCacheDB() *CacheDB {
+	if !Cache.IsInitialized() {
+		log.Fatal("cache is not initialized")
+	}
+	return Cache
+}
+
 func (c *CacheDB) IsInitialized() bool {
 	return Cache.DB != nil && Cache.DB.Handle != nil
 }
