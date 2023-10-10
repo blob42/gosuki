@@ -117,14 +117,15 @@ func runBrowserModule(m *manager.Manager,
 			unitName = fmt.Sprintf("%s(%s)", unitName, profileName)
 		}
 
-
-		//BUG: last worker is the only instance that is run
-		worker := watch.Worker(runner)
+		worker := watch.WatchWork{
+			WatchRunner: runner,
+		}
 
 		m.AddUnit(worker, unitName)
 
 		return nil
 }
+
 
 func startDaemon(c *cli.Context) error {
 	defer utils.CleanFiles()
@@ -138,6 +139,27 @@ func startDaemon(c *cli.Context) error {
 	// Initialize sqlite database available in global `cacheDB` variable
 	db.Init()
 
+	// Handle normal modules
+	mods := modules.GetModules()
+	for _, mod := range mods {
+		name := mod.ModInfo().ID
+		log.Debugf("starting <%s>", name)
+		modInstance := mod.ModInfo().New()
+
+		ir, ok := modInstance.(watch.IntervalFetcher)
+		if !ok {
+			log.Criticalf("module <%s> does not implement watch.IntervalRunner", name)
+			continue
+		}
+
+		worker := watch.IntervalWork{
+			Name: string(name),
+			IntervalFetcher: ir,
+		}
+		manager.AddUnit(worker, string(name))
+	}
+
+	// start all registered browser modules
 	registeredBrowsers := modules.GetBrowserModules()
 
 	// instanciate all browsers

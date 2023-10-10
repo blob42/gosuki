@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/blob42/gosuki"
+	"github.com/blob42/gosuki/internal/database"
 	"github.com/blob42/gosuki/internal/logging"
 	"github.com/blob42/gosuki/pkg/manager"
 
@@ -36,6 +37,17 @@ var log = logging.GetLogger("WATCH")
 type WatchRunner interface {
 	Watcher
 	Runner
+}
+
+type IntervalFetcher interface {
+	Fetcher
+	Interval() time.Duration
+}
+
+// Fetcher is an interface for modules that fetches data from some source 
+// and produces a list of bookmarks. 
+type Fetcher interface {
+	Fetch() ([]*gosuki.Bookmark, error)
 }
 
 // If the browser needs the watcher to be reset for each new event
@@ -129,18 +141,14 @@ type Watch struct {
 }
 
 // Implement work unit for watchers
-type WatcherWork struct {
-	wr WatchRunner
+type WatchWork struct {
+	WatchRunner
 }
 
-func Worker(wr WatchRunner) WatcherWork {
-	return WatcherWork{wr}
-}
-
-func (w WatcherWork) Run(m manager.UnitManager) {
-	watcher := w.wr.Watch()
+func (w WatchWork) Run(m manager.UnitManager) {
+	watcher := w.Watch()
 	if ! watcher.isWatching {
-		go WatchLoop(w.wr)
+		go WatchLoop(w.WatchRunner)
 		watcher.isWatching = true
 
 		for _, watch := range watcher.Watches{
@@ -150,13 +158,67 @@ func (w WatcherWork) Run(m manager.UnitManager) {
 
 	// wait for stop signal
 	<-m.ShouldStop()
-	sht, ok := w.wr.(Shutdowner)
+	sht, ok := w.WatchRunner.(Shutdowner)
 	if ok {
 		if err := sht.Shutdown(); err != nil {
 			m.Panic(err)
 		}
 	}
 	m.Done()
+}
+
+// Implement work unit for interval runners
+type IntervalWork struct {
+	Name string
+	IntervalFetcher
+}
+
+func (iw IntervalWork) Run(m manager.UnitManager) {
+	go IntervalLoop(iw.IntervalFetcher, iw.Name)
+	// wait for stop signal
+	<-m.ShouldStop()
+	m.Done()
+}
+
+// Main thread for fetching bookmarks at regular intervals
+// One goroutine spawned per module
+func IntervalLoop(ir IntervalFetcher, modName string) {
+	var err error
+	var buffer *database.DB
+
+	// prepare buffer for module
+	buffer, err = database.NewBuffer(modName)
+	if err != nil {
+		log.Criticalf("could not create buffer for <%s>: %s", modName, err)
+		return
+	}
+	defer buffer.Close()
+
+	beat := time.NewTicker(ir.Interval()).C
+	for range beat {
+		marks, err := ir.Fetch()
+		if err != nil {
+			log.Errorf("error fetching bookmarks: %s", err)
+		}
+
+		if len(marks) == 0 {
+			log.Warningf("no bookmarks fetched")
+			continue
+		}
+
+		for _, mark := range marks {
+			log.Debugf("Fetched bookmark: %s", mark.URL)
+			buffer.UpsertBookmark(mark)
+		}
+		buffer.PrintBookmarks()
+		err = buffer.SyncToCache()
+		if err != nil {
+			log.Errorf("error syncing buffer to cache: %s", err)
+			continue
+		}
+		database.ScheduleSyncToDisk()
+	}
+
 }
 
 // Main thread for watching file changes
