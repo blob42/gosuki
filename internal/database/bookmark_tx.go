@@ -42,6 +42,7 @@ func cleanup(f func() error) {
 // Inserts or updates a bookmarks to the passed DB
 // In case of a conflict for a UNIQUE URL constraint,
 // update the existing bookmark
+//TODO!: use context
 func (db *DB) UpsertBookmark(bk *Bookmark) {
 
 	var sqlite3Err sqlite3.Error
@@ -89,7 +90,6 @@ func (db *DB) UpsertBookmark(bk *Bookmark) {
 	tags := NewTags(bk.Tags, TagSep).PreSanitize()
 
     tagListText := tags.String(true)
-	// log.Debugf("inserting tags %#v", tagListText)
 
 	// First try to insert the bookmark (assume it's new)
 	// log.Debugf("INSERT INTO bookmarks(URL, metadata, tags, desc, flags) VALUES (%s, %s, %s, %s, %d)",

@@ -113,7 +113,7 @@ func NewFirefoxConfig() *FirefoxConfig {
 			Stats:          &parsing.Stats{},
 			UseFileWatcher: true,
 			// NOTE: see parsing.Hook to add custom parsing logic for each
-			// parsed node
+			// parsed bookmark node
 			UseHooks:   []string{"notify-send"},
 
 		},
@@ -150,8 +150,6 @@ func NewFirefoxConfig() *FirefoxConfig {
 func init() {
 	FFConfig = NewFirefoxConfig()
 	config.RegisterConfigurator(BrowserName, config.AsConfigurator(FFConfig))
-
-	// log.Debugf("%p", FFConfig)
 
 	// An example of running custom code when config is ready
 	// config.RegisterConfReadyHooks(func(c *cli.Context) error{

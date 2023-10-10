@@ -55,6 +55,7 @@ var globalFirefoxFlags = []cli.Flag{
 
 // Firefox global flags must start with --firefox-<flag name here>
 // NOTE: is called in *cli.App.Before callback
+//TODO: refactor module flags/options mangement to generate flags from config options
 func globalCommandFlagsManager(c *cli.Context) error {
 	log.Debugf("<%s> registering global flag manager", BrowserName)
 	for _, f := range c.App.Flags {

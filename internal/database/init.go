@@ -34,6 +34,7 @@ func Init() {
 	initCache()
 	StartSyncScheduler()
 
+
 	// Check and initialize local db as last step
 	// browser bookmarks should already be in cache
 
