@@ -145,24 +145,6 @@ func FindNode(node *Node, root *Node) bool {
     return false
 }
 
-//Find all occurences of a node in a tree
-func GetNodes(root *Node, url *Node) []*Node {
-    var nodes []*Node
-    if root == nil || url == nil {
-        return nodes
-    }
-
-    if root == url {
-        nodes = append(nodes, root)
-    }
-
-    for _, child := range root.Children {
-        nodes = append(nodes, GetNodes(child, url)...)
-    }
-
-    return nodes
-}
-
 func FindNodeByName(name string, root *Node) bool {
 
 	if name == root.Name {
