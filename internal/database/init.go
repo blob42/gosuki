@@ -52,7 +52,7 @@ func Init() {
 
 	RegisterSqliteHooks()
 	initCache()
-	StartSyncScheduler()
+	startSyncScheduler()
 
 	dbpath := GetDBPath()
 	// If local db exists load it to cacheDB
@@ -86,7 +86,7 @@ func Init() {
 func initLocalDB(db *DB, dbpath string) {
 
 	log.Infof("Initializing local db at '%s'", dbpath)
-	err := db.SyncToDisk(dbpath)
+	err := db.backupToDisk(dbpath)
 	if err != nil {
 		log.Fatal(err)
 	}

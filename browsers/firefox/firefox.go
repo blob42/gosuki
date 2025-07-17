@@ -468,7 +468,7 @@ func (f *Firefox) PreLoad(_ *modules.Context) error {
 
 	// go database.Cache.DB.SyncToDisk(database.GetDBFullPath())
 	// schedule a sync to disk
-	database.ScheduleSyncToDisk()
+	database.ScheduleBackupToDisk()
 
 	//DEBUG:
 	// tree.PrintTree(f.NodeTree)
@@ -510,7 +510,7 @@ func (ff *Firefox) Run() {
 
 	database.SyncURLIndexToBuffer(ff.URLIndexList, ff.URLIndex, ff.BufferDB)
 	ff.BufferDB.SyncTo(database.Cache.DB)
-	database.ScheduleSyncToDisk()
+	database.ScheduleBackupToDisk()
 
 	ff.SetLastWatchRuntime(time.Since(startRun))
 	ff.lastRunAt = time.Now().UTC()

@@ -83,7 +83,7 @@ func CopyFilesToTmpFolder(srcglob string, dst string) error {
 
 // TEST:
 func CleanFiles() {
-	log.Debugf("Cleaning files <%s>", TMPDIR)
+	log.Debugf("cleaning files <%s>", TMPDIR)
 	err := os.RemoveAll(TMPDIR)
 	if err != nil {
 		log.Fatal(err)
@@ -93,7 +93,7 @@ func CleanFiles() {
 			return nil // Ignore errors when accessing files we don't have permission for
 		}
 		if matched, _ := filepath.Match("/tmp/gosuki*", path); matched {
-			log.Debugf("Removing glob file: %s", path)
+			log.Debugf("removing glob file: %s", path)
 			err = os.RemoveAll(path)
 			if err != nil {
 				return nil // Ignore errors when removing files (e.g., permission issues)

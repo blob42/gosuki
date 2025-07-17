@@ -511,7 +511,7 @@ func (ch *Chrome) run(runTask bool) {
 		log.Errorf("syncing buffer to cache: %v", err)
 	}
 
-	database.ScheduleSyncToDisk()
+	database.ScheduleBackupToDisk()
 	ch.SetLastWatchRuntime(time.Since(startRun))
 }
 

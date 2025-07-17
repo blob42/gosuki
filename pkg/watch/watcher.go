@@ -271,11 +271,11 @@ func Poll(ir Poller, modName string) {
 	beat := time.NewTicker(ir.Interval()).C
 
 	if err := database.LoadBookmarks(ir.Fetch, modName); err != nil {
-		log.Errorf("could not create buffer for <%s>: %s", modName, err)
+		log.Error("loading bookmarks", "module", modName, "err", err)
 	}
 	for range beat {
 		if err := database.LoadBookmarks(ir.Fetch, modName); err != nil {
-			log.Errorf("could not create buffer for <%s>: %s", modName, err)
+			log.Error("loading bookmarks", "module", modName, "err", err)
 		}
 	}
 

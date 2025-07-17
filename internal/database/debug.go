@@ -32,15 +32,15 @@ import (
 func DebugPrintRows(rows *sql.Rows) {
 	cols, _ := rows.Columns()
 	count := len(cols)
-	values := make([]interface{}, count)
-	valuesPtrs := make([]interface{}, count)
+	values := make([]any, count)
+	valuesPtrs := make([]any, count)
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug)
 	for _, col := range cols {
 		fmt.Fprintf(w, "%s\t", col)
 	}
 	fmt.Fprintf(w, "\n")
 
-	for i := 0; i < count; i++ {
+	for range count {
 		fmt.Fprintf(w, "\t")
 	}
 
@@ -52,9 +52,9 @@ func DebugPrintRows(rows *sql.Rows) {
 		}
 		rows.Scan(valuesPtrs...)
 
-		finalValues := make(map[string]interface{})
+		finalValues := make(map[string]any)
 		for i, col := range cols {
-			var v interface{}
+			var v any
 			val := values[i]
 			b, ok := val.([]byte)
 			if ok {
@@ -78,15 +78,15 @@ func DebugPrintRows(rows *sql.Rows) {
 func DebugPrintRow(rows *sql.Rows) {
 	cols, _ := rows.Columns()
 	count := len(cols)
-	values := make([]interface{}, count)
-	valuesPtrs := make([]interface{}, count)
+	values := make([]any, count)
+	valuesPtrs := make([]any, count)
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug)
 	for _, col := range cols {
 		fmt.Fprintf(w, "%s\t", col)
 	}
 	fmt.Fprintf(w, "\n")
 
-	for i := 0; i < count; i++ {
+	for range count {
 		fmt.Fprintf(w, "\t")
 	}
 
@@ -97,9 +97,9 @@ func DebugPrintRow(rows *sql.Rows) {
 	}
 	rows.Scan(valuesPtrs...)
 
-	finalValues := make(map[string]interface{})
+	finalValues := make(map[string]any)
 	for i, col := range cols {
-		var v interface{}
+		var v any
 		val := values[i]
 		b, ok := val.([]byte)
 		if ok {
@@ -123,6 +123,9 @@ func (db *DB) PrintBookmarks() error {
 	var url, tags string
 
 	rows, err := db.Handle.Query("select url,tags from bookmarks")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for rows.Next() {
 		err = rows.Scan(&url, &tags)

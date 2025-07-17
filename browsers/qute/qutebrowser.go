@@ -348,7 +348,7 @@ func (qu *Qute) load(runTask bool) error {
 		log.Errorf("<%s>: %v", qu.Name, err)
 	}
 
-	database.ScheduleSyncToDisk()
+	database.ScheduleBackupToDisk()
 	qu.SetLastWatchRuntime(time.Since(startWork))
 
 	return err

@@ -99,7 +99,7 @@ func (m *Manager) Shutdown() {
 	<-m.ready
 	// send shutdown event to all worker units
 	for name, w := range m.workers {
-		log.Debugf("shutting down %s\n", name)
+		log.Debugf("stopping %s\n", name)
 		w.stop <- true
 	}
 
@@ -205,7 +205,7 @@ func (m *Manager) AddUnit(unit WorkUnit, name string) {
 	unitID := idGenerator(unitName)
 	unitName = fmt.Sprintf("%s#%d]", unitName, unitID)
 
-	log.Debug("Adding unit ", "name", unitName)
+	log.Debug("adding unit ", "name", unitName)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.workers[unitName] = workUnitManager

@@ -1,0 +1,75 @@
+title: |md
+    # modules & interfaces
+| {near: top-center}
+
+modules.shape: package
+profiles.shape: package
+watch.shape: package
+
+classes: {
+    if: {
+        shape: page
+    }
+}
+
+initializer.class: if
+loader.class: if
+shutdowner.class: if
+
+explanation_left: |md
+    # ProfileManager
+    For modules that want to support multiple profiles.
+
+    See browser modules for reference.
+
+| {near: center-left}
+
+explanation_right: |md
+    # Initializer / ProfileInitializer
+    The very first code run by gosuki after importing the module. 
+
+    Use it to initialize the state of the module at the earliest stage.
+
+    # Loader
+    Implement this if you want to preload bookmarks and data before the 
+
+    module enters the main loop.
+
+    # Runners
+    The core logic of bookmark loading happens within runners.
+
+    Every module is `required` to implement one of the runner interfaces.
+
+| { near: center-right }
+
+runners {
+    watchRunner.class: if
+    intervalFetcher.class: if
+}
+
+watch -- runners.watchRunner
+watch -- runners.intervalFetcher
+
+
+profileManager.class: if
+profileInitializer.class: if
+
+profiles -- profileManager
+
+profiles -- profileInitializer
+modules -- profileInitializer
+modules -- initializer
+profileInitializer -- loader
+initializer -- loader
+loader -- runners
+runners -- shutdowner
+
+legend: {
+    style: {
+        stroke: transparent
+        fill: transparent
+    }
+    near: bottom-left
+    packages.shape: package
+    interfaces.shape: page
+}

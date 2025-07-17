@@ -33,7 +33,7 @@
 // records from a source database to a destination database. If an insertion fails due
 // to a constraint (e.g., duplicate URL), it will attempt to update the existing record.
 //
-// The `SyncToDisk` method provides a way to sync a database to a specified disk path,
+// The `backupToDisk` method provides a way to sync a database to a specified disk path,
 // using SQLite's backup API for efficient copying.
 //
 // The `SyncFromDisk` method allows for restoring data from a disk file into a database.
@@ -50,7 +50,6 @@
 //
 // See the individual function documentation for more details about their usage and behavior.
 package database
-
 
 import (
 	"fmt"
@@ -235,10 +234,7 @@ func (src *DB) SyncTo(dst *DB) {
 
 	// If we are syncing to memcache, sync cache to disk
 	if dst.Name == CacheName {
-		err = dst.SyncToDisk(GetDBFullPath())
-		if err != nil {
-			log.Error(err)
-		}
+		ScheduleBackupToDisk()
 	}
 }
 
@@ -268,7 +264,6 @@ func cacheSyncScheduler(input <-chan any) {
 			}
 		case <-timer.C:
 			if len(queue) > 0 {
-				log.Debug("syncing cache to disk")
 				if Cache.DB == nil {
 					log.Fatalf("cache db is nil")
 				}
@@ -285,22 +280,29 @@ func cacheSyncScheduler(input <-chan any) {
 	}
 }
 
-func ScheduleSyncToDisk() {
+// TODO: add `force` param to force sync
+func ScheduleBackupToDisk() {
 	go func() {
 		log.Debug("received sync to disk request")
 		syncQueue <- true
 	}()
 }
 
-func StartSyncScheduler() {
+func startSyncScheduler() {
 	go cacheSyncScheduler(syncQueue)
 }
 
-func (src *DB) SyncToDisk(dbpath string) error {
-	log.Debugf("Syncing <%s> to <%s>", src.Name, dbpath)
+// backupToDisk copies the `src` database contents to a file on disk.
+// It creates a backup of the source database (src) to the specified dbpath.
+// The function is safe for concurrent use as it acquires a mutex.
+// Returns an error if any step fails, including database connection issues,
+// backup execution errors, or invalid configuration.
+// Uses SQLite's backup API via the sqlx package, requiring the driver to support it.
+func (src *DB) backupToDisk(dbpath string) error {
+	log.Debugf("copying <%s> to <%s>", src.Name, dbpath)
 	defer func() {
 		if err := recover(); err != nil {
-			log.Error("Recovered in SyncToDisk", err)
+			log.Error("recovered in backupToDisk", err)
 		}
 	}()
 
@@ -351,14 +353,14 @@ func (src *DB) SyncToDisk(dbpath string) error {
 	}
 
 	bkp.Finish()
-	log.Infof("synced <%s> to <%s>", src.Name, dbpath)
+	log.Infof("copied <%s> to <%s>", src.Name, dbpath)
 
 	return nil
 }
 
 func (dst *DB) SyncFromDisk(dbpath string) error {
 
-	log.Debugf("Syncing <%s> to <%s>", dbpath, dst.Name)
+	log.Debugf("syncing <%s> to <%s>", dbpath, dst.Name)
 
 	dbURI := fmt.Sprintf("file:%s", dbpath)
 	srcDB, err := sqlx.Open(DriverBackupMode, dbURI)
@@ -391,11 +393,11 @@ func (dst *DB) SyncFromDisk(dbpath string) error {
 	return nil
 }
 
-// Copy from src DB to dst DB
-// Source DB os overwritten
-func (src *DB) CopyTo(dst *DB) {
+// Copy from src DB to dst DB using sqlite3 backup mode
+// `dst` is overwritten
+func (src *DB) CopyTo(dst *DB, dstName, srcName string) {
 
-	log.Debugf("Copying <%s> to <%s>", src.Name, dst.Name)
+	log.Debugf("copying <%s> to <%s>", src.Name, dst.Name)
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -449,7 +451,7 @@ func (src *DB) SyncToCache() error {
 	}
 	if empty || (isSQL3Err && sql3err.Code == sqlite3.ErrError) {
 		log.Debugf("cache is empty, copying <%s> to <%s>", src.Name, CacheName)
-		src.CopyTo(Cache.DB)
+		src.CopyTo(Cache.DB, "main", "main")
 	} else {
 		log.Debugf("syncing <%s> to cache", src.Name)
 		src.SyncTo(Cache.DB)

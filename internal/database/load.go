@@ -63,7 +63,7 @@ func LoadBookmarks(load loadFunc, modName string) error {
 		return fmt.Errorf("error syncing buffer to cache: %w", err)
 	}
 
-	ScheduleSyncToDisk()
+	ScheduleBackupToDisk()
 
 	return nil
 }

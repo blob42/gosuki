@@ -23,10 +23,10 @@ func TestSchemaInitialization(t *testing.T) {
 	// Initialize a new on disk database instance
 	db, err := NewDB("test_db", "", DBTypeInMemoryDSN).Init()
 	require.NoError(t, err, "failed to initialize memory database")
-	db.SyncToDisk(dbPath)
+	db.backupToDisk(dbPath)
 
 	// Refer to disk database
-	db, err = NewDB("test_db", dbPath, DBTypeFileDSN).Init()
+	db, err = NewDB("gosuki_db", dbPath, DBTypeFileDSN).Init()
 	require.NoError(t, err, "failed to initialize disk database")
 
 	err = db.InitSchema()
@@ -79,7 +79,7 @@ func TestSchemaUpgrade(t *testing.T) {
 	// Initialize a new on disk database instance
 	db, err := NewDB("test_db", "", DBTypeInMemoryDSN).Init()
 	require.NoError(t, err, "failed to initialize memory database")
-	db.SyncToDisk(dbPath)
+	db.backupToDisk(dbPath)
 
 	// Refer to ondisk db
 	db, err = NewDB("test_db", dbPath, DBTypeFileDSN).Init()
@@ -139,13 +139,14 @@ func TestSchemaVersionMismatch(t *testing.T) {
 	dbPath := dir + "/test.db"
 
 	// Initialize a new database instance
-	db, err := NewDB(dbPath, "", DBTypeInMemoryDSN).Init()
+	db, err := NewDB("gosuki_db", "", DBTypeInMemoryDSN).Init()
 	require.NoError(t, err, "failed to initialize database")
+
 	err = db.InitSchema()
 	require.NoError(t, err, "failed to initialize schema")
 
 	// sync to disk
-	err = db.SyncToDisk(dbPath)
+	err = db.backupToDisk(dbPath)
 	require.NoError(t, err, "failed to sync memory db to disk")
 
 	// refer to disk db

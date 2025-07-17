@@ -1,0 +1,37 @@
+modTypes: module types {
+              browser
+              simple
+  }
+
+
+modules.shape: package
+
+modules: modules package {
+    mod1
+    mod2
+    ".."
+}
+
+
+gosuki <- modules.mod1: RegisterModule()
+gosuki -> daemon: start
+
+isBrowser: is browser
+isBrowser.shape: diamond
+modules -> daemon: GetModules()
+daemon -> isBrowser: each mod
+
+setupBrowser: browser setup
+setupMod: simple setup
+isBrowser -> setupBrowser: yes
+isBrowser -> setupMod: no
+
+loadRun: load and run
+loadRun.shape: oval
+setupBrowser -> loadRun
+setupMod -> loadRun
+
+
+
+
+
