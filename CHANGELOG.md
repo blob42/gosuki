@@ -7,21 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
 ### Added
 
 - Added support for brave browser (linux, snap, flatpak)
 - Flatpak support for: google-chrome, chromium, firefox, librewolf
+- Database schema upgrade to v2 with `xhsum` column for efficient synchronization and conflict resolution
+- Two-level database cache (L1/L2) for improved performance and consistent data state
 - CLI command `buku import` for importing a buku DB to gosuki
-- tests for gosuki db schema version and upgrades
+- Schema versioning tracking in `schema_version` table
+- `bookmarks` view with INSTEAD OF triggers for Buku compatibility
+- Example bookmark launcher with rofi `contrib/rofi.sh`
 
 ### Changed
 
-- BREAKING: database schema modified to allow future upgrades
+- BREAKING: Database schema modified to allow future upgrades
+- Schema migration: `gskbookmarks` table replaces `bookmarks` (legacy `bookmarks` remains as a view)
+- Hide helper script from public doc
 
 ### Fixed
 
 - UpsertBookmark: does not unset the title if the new value is empty
+- Description field not being updated in some cases
+- CLI: use custom path to config file
+- CLI: fix watch-all flag
+- TUI: disable tui code in daemon mode
 
 
 ##### Changes to DB Schema 
