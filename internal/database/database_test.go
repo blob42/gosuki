@@ -12,6 +12,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -29,7 +30,7 @@ func TestNew(t *testing.T) {
 
 		db := NewDB("buffer", "", DBTypeInMemoryDSN)
 
-		if db.Path != "file:buffer?mode=memory&cache=shared" {
+		if db.Path != "file:buffer?mode=memory&cache=shared&_journal=MEMORY" {
 			t.Error("invalid buffer path")
 		}
 
@@ -38,7 +39,7 @@ func TestNew(t *testing.T) {
 	t.Run("MemPath", func(t *testing.T) {
 
 		db := NewDB("cache", "", DBTypeCacheDSN)
-		if db.Path != "file:cache?mode=memory&cache=shared" {
+		if db.Path != "file:cache?mode=memory&cache=shared&_journal=MEMORY" {
 			t.Fail()
 		}
 
@@ -75,7 +76,7 @@ func TestNew(t *testing.T) {
 
 		db := NewDB("append_opts", "", DBTypeInMemoryDSN, opts)
 
-		if db.Path != "file:append_opts?mode=memory&cache=shared&foo=bar&mode=rw" {
+		if db.Path != "file:append_opts?mode=memory&cache=shared&_journal=MEMORY&foo=bar&mode=rw" {
 			t.Fail()
 		}
 	})
@@ -220,7 +221,16 @@ func TestSyncTo(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		url := fmt.Sprintf("http://example.com/bookmark%d", i)
 		_, err := srcDB.Handle.Exec(
-			`INSERT INTO gskbookmarks(url, metadata, tags, desc, modified, flags, module) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO gskbookmarks(
+				url,
+				metadata,
+				tags,
+				desc,
+				modified,
+				flags,
+				module,
+				xhsum
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			url,
 			"title"+strconv.Itoa(i),
 			"tag"+strconv.Itoa(i),
@@ -228,6 +238,12 @@ func TestSyncTo(t *testing.T) {
 			modified,
 			0,
 			"module"+strconv.Itoa(i),
+			xhsum(
+				url,
+				"title"+strconv.Itoa(i),
+				"tag"+strconv.Itoa(i),
+				"description"+strconv.Itoa(i),
+			),
 		)
 		if err != nil {
 			t.Error(err)
@@ -235,9 +251,7 @@ func TestSyncTo(t *testing.T) {
 	}
 
 	err := srcDB.Handle.Select(&bookmarks, `SELECT * FROM gskbookmarks`)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	// pretty.Print(bookmarks)
 	srcDB.SyncTo(dstDB)

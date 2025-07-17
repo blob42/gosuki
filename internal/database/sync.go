@@ -18,41 +18,45 @@
 // You should have received a copy of the GNU Affero General Public License along with
 // gosuki.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package database provides functionality for managing and synchronizing SQLite databases,
-// specifically for bookmark data. It includes methods for syncing data between databases,
-// caching, and disk persistence.
-//
-// The package supports:
-//   - Syncing data from one database to another (upsert or update)
-//   - Synchronizing in-memory cache databases to disk
-//   - Copying entire databases
-//   - Scheduling periodic sync operations
-//   - Handling SQLite-specific constraints and errors
-//
-// The `SyncTo` method implements a manual UPSERT operation, which attempts to insert
-// records from a source database to a destination database. If an insertion fails due
-// to a constraint (e.g., duplicate URL), it will attempt to update the existing record.
-//
-// The `backupToDisk` method provides a way to sync a database to a specified disk path,
-// using SQLite's backup API for efficient copying.
-//
-// The `SyncFromDisk` method allows for restoring data from a disk file into a database.
-//
-// The `CopyTo` method is used to copy an entire database from one location to another.
-//
-// The `SyncToCache` method is used to sync a database to an in-memory cache, either by
-// copying the entire database or by performing a sync operation if the cache is not empty.
-//
-// This package also includes a scheduler for debounced sync operations to disk, which
-// prevents excessive disk writes and ensures that syncs happen at regular intervals.
-//
-// The package uses the `sqlx` package for database operations and `log` for logging.
-//
-// See the individual function documentation for more details about their usage and behavior.
+/*
+Package database provides a comprehensive suite of tools for managing, synchronizing, and persisting SQLite databases
+specifically tailored for bookmark data. It implements efficient data synchronization between in-memory caches and
+disk-based databases, handles SQLite-specific operations, and includes scheduling mechanisms for optimized disk access.
+
+Key Features:
+- Bidirectional synchronization between databases (upsert/update operations)
+- In-memory cache management with automatic disk persistence
+- Full database copying and restoration capabilities
+- Scheduled debounced sync operations to prevent excessive I/O
+- Robust error handling for SQLite constraints and operations
+- Utilizes SQLite's native backup API for efficient data transfers
+
+The package is designed to support a two-level caching architecture:
+1. L1 (in-memory cache) - for fast access and temporary storage
+2. L2 (disk-based cache) - for persistent storage and data integrity
+
+It provides methods for:
+- Syncing data between databases (SyncTo, SyncFromDisk)
+- Copying entire databases (CopyTo)
+- Managing cache-to-disk synchronization (SyncToCache, backupToDisk)
+- Scheduling periodic sync operations (ScheduleBackupToDisk)
+
+The package leverages the sqlx library for database operations.
+All database operations should be thread-safe through the use of mutexes and proper transaction management.
+
+Note: This package requires proper initialization of database connections and configuration parameters
+(e.g., sync intervals, database paths) before use.
+
+See individual function documentation for specific usage patterns and behavior details.
+*/
+
 package database
+
+// TODO: add context to all queries
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -62,12 +66,25 @@ import (
 
 var mu sync.Mutex
 
-// Manual UPSERT:
-// For every row in `src` try to insert it into `dst`. if if fails then try to
-// update it. It means `src` is synced to `dst`
+/*
+	SyncTo synchronizes bookmarks from the source DB (src) to the destination DB (dst).
+
+It performs the following steps:
+ 1. Reads all entries from src's gskbookmarks table
+ 2. Attempts to insert each entry into dst's gskbookmarks table
+ 3. For existing entries (due to URL constraints), captures their hashes and
+    processes them in a second transaction for potential updates
+ 4. Updates existing entries only if there are changes in metadata, tags, or description
+ 5. Commits transactions for both insert and update phases
+ 6. If dst is a memcache, schedules a disk backup after completion
+
+The synchronization uses SQLite transactions for consistency and handles
+duplicate URL constraints by comparing hash values. Tags are merged and
+normalized during updates.
+*/
 func (src *DB) SyncTo(dst *DB) {
 	var sqlite3Err sqlite3.Error
-	var existingUrls []*RawBookmark
+	var existingUrls = make(map[uint64]*RawBookmark)
 
 	log.Debugf("syncing <%s> to <%s>", src.Name, dst.Name)
 
@@ -82,44 +99,53 @@ func (src *DB) SyncTo(dst *DB) {
 		log.Error(err)
 	}
 
-	getDstTags, err := dst.Handle.Preparex(
-		`SELECT tags FROM gskbookmarks WHERE url=? LIMIT 1`,
-	)
-
-	defer func() {
-		err = getDstTags.Close()
-
-		if err != nil {
-			log.Error(err)
-		}
-	}()
-
-	if err != nil {
-		log.Error(err)
-	}
-
 	tryInsertDstRow, err := dst.Handle.Preparex(
 		`INSERT INTO
-		gskbookmarks(url, metadata, tags, desc, flags, module)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		gskbookmarks(
+			url,
+			metadata,
+			tags,
+			desc,
+			flags,
+			module,
+			xhsum
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 	)
+	if err != nil {
+		log.Error("prepare stmt", "err", err)
+	}
+
 	defer func() {
 		err = tryInsertDstRow.Close()
 		if err != nil {
-			log.Error(err)
+			log.Error("closing statement: ", "err", err)
 		}
 	}()
 
-	if err != nil {
-		log.Error(err)
-	}
-
 	updateDstRow, err := dst.Handle.Preparex(
 		`UPDATE gskbookmarks
-		SET (metadata, tags, desc, modified, flags) = (?,?,?,strftime('%s'),?)
-		WHERE url=?
+		SET (
+			metadata,
+			tags,
+			desc,
+			modified,
+			flags,
+			xhsum
+		) = (
+			CASE WHEN ? != '' THEN ? ELSE metadata END,
+			?,
+			CASE WHEN ? != '' THEN ? ELSE desc END,
+			strftime('%s'),
+			?,
+			?
+		)
+		WHERE url=? 
 		`,
 	)
+	if err != nil {
+		log.Error("closing statement: ", "err", err)
+	}
 
 	defer func() {
 		err = updateDstRow.Close()
@@ -128,19 +154,21 @@ func (src *DB) SyncTo(dst *DB) {
 		}
 	}()
 
-	if err != nil {
-		log.Error(err)
-	}
-
 	srcTable, err := getSourceTable.Queryx()
 	if err != nil {
-		log.Error(err)
+		log.Error("get src table: ", "err", err)
 	}
 
 	dstTx, err := dst.Handle.Beginx()
 	if err != nil {
-		log.Error(err)
+		log.Error("begin tx", "err", err)
+		dstTx.Rollback()
+		return
 	}
+
+	getDstTagsStmt, err := dst.Handle.Preparex(
+		`SELECT tags FROM gskbookmarks WHERE url=? LIMIT 1`,
+	)
 
 	// Start syncing all entries from source table
 	for srcTable.Next() {
@@ -149,7 +177,8 @@ func (src *DB) SyncTo(dst *DB) {
 		scan := RawBookmark{}
 		err = srcTable.StructScan(&scan)
 		if err != nil {
-			log.Error(err)
+			log.Error("scan", "err", err)
+			continue
 		}
 
 		// Try to insert to row in dst table
@@ -160,6 +189,12 @@ func (src *DB) SyncTo(dst *DB) {
 			scan.Desc,
 			scan.Flags,
 			scan.Module,
+			xhsum(
+				scan.URL,
+				scan.Metadata,
+				scan.Tags,
+				scan.Desc,
+			),
 		)
 
 		if err != nil {
@@ -167,37 +202,48 @@ func (src *DB) SyncTo(dst *DB) {
 		}
 
 		if err != nil && sqlite3Err.Code != sqlite3.ErrConstraint {
-			log.Error(err)
+			log.Error("inserting", "err", err)
+			continue
 		}
 
-		// Record already exists in dst table, we need to use update instead.
+		// Record already existing bookmarks in `dst` then proceed to UPDATE.
 		if err != nil && sqlite3Err.Code == sqlite3.ErrConstraint {
-			existingUrls = append(existingUrls, &scan)
+
+			// check original hash of bookmark
+			var srcBkHash xxhashsum
+			err = dstTx.QueryRowx("SELECT xhsum FROM gskbookmarks WHERE url = ?", scan.URL).Scan(&srcBkHash)
+			if err != nil {
+				log.Error("select xhsum from", "src", L2Cache.Name, "url", scan.URL, "err", err)
+				continue
+
+			}
+
+			existingUrls[uint64(srcBkHash)] = &scan
 		}
 	}
 
 	err = dstTx.Commit()
 	if err != nil {
-		log.Error(err)
+		log.Error("rolling back after error", "err", err)
+		dstTx.Rollback()
 	}
 
-	// Start a new transaction to update the existing urls
 	dstTx, err = dst.Handle.Beginx()
 	if err != nil {
-		log.Error(err)
+		log.Error("begin tx", "err", err)
 	}
 
-	// Traverse existing urls and try an update this time
-	for _, scan := range existingUrls {
+	// Loop performing the update for each existing bookmark
+	for hash, scan := range existingUrls {
 		var tags string
-
 		//log.Debugf("updating existing %s", scan.Url)
 
-		getDstTags.Get(&tags, scan.URL)
+		if err = dstTx.Stmtx(getDstTagsStmt).Get(&tags, scan.URL); err != nil {
+			log.Error("get tags query", "err", err)
+		}
 
-		srcTags := TagsFromString(scan.Tags, TagSep)
-
-		dstTags := TagsFromString(tags, TagSep)
+		srcTags := TagsFromString(scan.Tags, TagSep).Sort()
+		dstTags := TagsFromString(tags, TagSep).Sort()
 
 		tagMap := make(map[string]bool)
 		for _, v := range srcTags.tags {
@@ -211,13 +257,21 @@ func (src *DB) SyncTo(dst *DB) {
 		for k := range tagMap {
 			newTags.Add(k)
 		}
-		newTagsStr := newTags.StringWrap()
+		newTagsStr := newTags.Sort().StringWrap()
+		newHash := xhsum(scan.URL, scan.Metadata, newTagsStr, scan.Desc)
+
+		if strconv.FormatUint(hash, 10) == newHash {
+			continue
+		}
 
 		_, err = dstTx.Stmtx(updateDstRow).Exec(
 			scan.Metadata,
+			scan.Metadata,
 			newTagsStr,
 			scan.Desc,
+			scan.Desc,
 			0, //flags
+			newHash,
 			scan.URL,
 		)
 
@@ -229,10 +283,11 @@ func (src *DB) SyncTo(dst *DB) {
 
 	err = dstTx.Commit()
 	if err != nil {
-		log.Error(err)
+		dstTx.Rollback()
+		log.Error("sync:commit", "err", err)
 	}
 
-	// If we are syncing to memcache, sync cache to disk
+	// If we are syncing to memcache, schedule a write to disk
 	if dst.Name == CacheName {
 		ScheduleBackupToDisk()
 	}
@@ -240,7 +295,12 @@ func (src *DB) SyncTo(dst *DB) {
 
 var syncQueue = make(chan any)
 
-// Sync all databases to disk in a goroutine using a debouncer
+// cacheSyncScheduler starts a scheduler that debounces cache sync operations to
+// disk. it uses a two-level caching strategy: first syncing the main cache to
+// an l2 cache, then backing up the l2 cache to disk. the scheduler processes
+// input events to trigger syncs, with a debounce interval defined by
+// dbconfig.syncinterval. if the internal queue is full, incoming sync requests
+// are dropped. on timer expiration, it performs the sync and backup operations.
 func cacheSyncScheduler(input <-chan any) {
 	log.Debug("starting cache sync scheduler")
 
@@ -267,7 +327,14 @@ func cacheSyncScheduler(input <-chan any) {
 				if Cache.DB == nil {
 					log.Fatalf("cache db is nil")
 				}
-				if err := Cache.SyncToDisk(GetDBFullPath()); err != nil {
+				// Backup in 2 levels
+				// 1. Sync Cache to L2 cache
+				// 2. Backup L2 cache to disk
+				// This allows comparing bookmark change checksums against the
+				// disk database. In other words, L1 cache used for efficiency
+				// and L2 ensures data integrity and avoids unecessary I/O.
+				Cache.SyncTo(L2Cache.DB)
+				if err := L2Cache.backupToDisk(GetDBFullPath()); err != nil {
 					log.Fatalf("failed to sync cache to disk: %s", err)
 				}
 

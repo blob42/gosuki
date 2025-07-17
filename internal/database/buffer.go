@@ -29,6 +29,16 @@ import (
 	"github.com/blob42/gosuki/pkg/tree"
 )
 
+// A Buffer is an in-memory sqlite database holding the current state of parsed
+// bookmarks within a specific module. Buffers act as temporary, per-module
+// storage that aggregates data before synchronizing with the Level 1 Cache
+// (Cache). This decouples module processing from the global cache hierarchy,
+// enabling efficient batching of updates and reducing contention. Buffers are
+// ephemeral and exist only for the duration of module operations, with their
+// contents periodically flushed and mereged into the Level 1 Cache to propagate
+// changes upward in the two-level architecture. This design ensures minimal I/O
+// overhead while maintaining consistency through checksum-based comparisons
+// between cache levels.
 func NewBuffer(name string) (*DB, error) {
 	// add random id to buf name
 	randID := shortid.MustGenerate()

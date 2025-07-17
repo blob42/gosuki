@@ -41,9 +41,12 @@ func cleanup(f func() error) {
 	}
 }
 
-// Inserts or updates a bookmarks to the passed DB
-// In case of a conflict for a UNIQUE URL constraint,
-// update the existing bookmark
+// TODO: use context
+// Inserts or updates a bookmark in the target database. If a bookmark with the
+// same URL already exists due to a constraint, the existing entry is updated
+// with the new data.
+// NOTE: We don't use sql UPSERT as we need to do a manual merge of some columns
+// such as `tags`.
 func (db *DB) UpsertBookmark(bk *Bookmark) error {
 
 	var sqlite3Err sqlite3.Error
@@ -52,10 +55,19 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 
 	_db := db.Handle
 
-	// Prepare statement that does a pure insert only
-	tryInsertBk, err := _db.Prepare(
-		`INSERT INTO gskbookmarks(URL, metadata, tags, desc, flags, module)
-			VALUES (?, ?, ?, ?, ?, ?)`,
+	// Try an INSERT at first
+	tryInsertBk, err := _db.Preparex(
+		`INSERT INTO
+			gskbookmarks(
+				URL,
+				metadata,
+				tags,
+				desc,
+				flags,
+				module,
+				xhsum
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?)`,
 	)
 	if err != nil {
 		log.Errorf("%s: %s", err, bk.URL)
@@ -63,12 +75,15 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 	}
 	defer cleanup(tryInsertBk.Close)
 
-	updateBk, err := _db.Prepare(
+	// UPDATE on constraint errors
+	updateBk, err := _db.Preparex(
 		`UPDATE gskbookmarks
 		SET
 			metadata = CASE WHEN ? != '' THEN ? ELSE metadata END,
+			desc = CASE WHEN ? != '' THEN ? ELSE desc END,
 			tags=?,
-			modified=strftime('%s')
+			modified=strftime('%s'),
+			xhsum=?
 		WHERE url=?`,
 	)
 	defer cleanup(updateBk.Close)
@@ -78,7 +93,7 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 	}
 
 	// Stmt to fetch existing bookmark and tags in db
-	getTagsStmt, err := _db.Prepare(`SELECT tags FROM gskbookmarks WHERE url=? LIMIT 1`)
+	getTagsStmt, err := _db.Preparex(`SELECT tags FROM gskbookmarks WHERE url=? LIMIT 1`)
 	defer cleanup(getTagsStmt.Close)
 	if err != nil {
 		log.Errorf("%s: %s", err, bk.URL)
@@ -86,7 +101,7 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 	}
 
 	// Begin transaction
-	tx, err := _db.Begin()
+	tx, err := _db.Beginx()
 	if err != nil {
 		log.Error(err)
 		return err
@@ -102,7 +117,7 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 	// sanitize tags
 	// avoid using the delim in the query
 	// ex: [ "tag,1", "t,g2", "tag3" ] -> [ "tag--1", "t--g2", "tag3" ]
-	tags := NewTags(bk.Tags, TagSep).PreSanitize()
+	tags := NewTags(bk.Tags, TagSep).PreSanitize().Sort()
 
 	tagListText := tags.String(true)
 
@@ -110,13 +125,16 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 	// log.Debugf("INSERT INTO gskbookmarks(URL, metadata, tags, desc, flags) VALUES (%s, %s, %s, %s, %d)",
 	// 	bk.URL, bk.Metadata, tagListText, "", 0)
 
-	_, err = tx.Stmt(tryInsertBk).Exec(
+	_, err = tx.Stmtx(tryInsertBk).Exec(
 		bk.URL,
-		bk.Title,
+		bk.Title, //metadata
 		tagListText,
-		"",        // desc
+		bk.Desc,
 		0,         // flags
 		bk.Module, // source module that created this mark
+
+		// xhash sum
+		xhsum(bk.URL, bk.Title, tagListText, bk.Desc),
 	)
 
 	if err != nil {
@@ -131,17 +149,28 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 		log.Errorf("%s: %s", err, bk.URL)
 		return err
 	}
-	// We will handle ErrConstraint ourselves
 
-	// ErrConstraint means the bookmark (url) already exists in table,
-	// we need to update it instead.
+	// We will handle ErrConstraint: only against URL for now. UPDATE the
+	// bookmark instead IF xhash(url+metadata+tags+desc) changed
 	if err != nil && sqlite3Err.Code == sqlite3.ErrConstraint {
 		log.Debugf("Updating bookmark %s", bk.URL)
 
-		// First get existing tags for this bookmark if any ?
-		res := tx.Stmt(getTagsStmt).QueryRow(
-			bk.URL,
-		)
+		// Get existing xhashsum of bookmark
+		var targetXHSum string
+		err = tx.QueryRowx("SELECT xhsum FROM gskbookmarks WHERE url = ?", bk.URL).Scan(&targetXHSum)
+		if err != nil {
+			log.Error("%s", err, "url", bk.URL)
+			return err
+		}
+
+		// We will only update the bookmark if the xhsum changed
+		if targetXHSum == xhsum(bk.URL, bk.Title, tagListText, bk.Desc) {
+			log.Debug("upsert: same hash skipping", "url", bk.URL)
+			return tx.Rollback()
+		}
+
+		// First get existing tags for this bookmark if any
+		res := tx.Stmtx(getTagsStmt).QueryRow(bk.URL)
 		res.Scan(&scannedTags)
 		cacheTags := TagsFromString(scannedTags, TagSep)
 
@@ -164,10 +193,18 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 
 		tagListText := newTags.StringWrap()
 		log.Debugf("Updating bookmark %s with tags <%s>", bk.URL, tagListText)
-		_, err = tx.Stmt(updateBk).Exec(
+
+		_, err = tx.Stmtx(updateBk).Exec(
 			bk.Title,
 			bk.Title,
+			bk.Desc,
+			bk.Desc,
 			tagListText,
+
+			// xhsum
+			xhsum(bk.URL, bk.Title, tagListText, bk.Desc),
+
+			// where clause
 			bk.URL,
 		)
 
@@ -180,18 +217,18 @@ func (db *DB) UpsertBookmark(bk *Bookmark) error {
 	return tx.Commit()
 }
 
-// Inserts a bookmarks to the passed DB
-// In case of conflict follow the default rules
-// which for sqlite is a fail with the error `sqlite3.ErrConstraint`
+// Inserts a bookmarks to DB. In case of conflict follow the default rules which
+// for sqlite is a fail with the error `sqlite3.ErrConstraint`
+// DEAD:
 func (db *DB) InsertBookmark(bk *Bookmark) {
 	//log.Debugf("Adding bookmark %s", bk.URL)
 	_db := db.Handle
-	tx, err := _db.Begin()
+	tx, err := _db.Beginx()
 	if err != nil {
 		log.Error(err)
 	}
 
-	stmt, err := tx.Prepare(`INSERT INTO gskbookmarks(URL, metadata, tags, desc, flags) VALUES (?, ?, ?, ?, ?)`)
+	stmt, err := tx.Preparex(`INSERT INTO gskbookmarks(URL, metadata, tags, desc, flags) VALUES (?, ?, ?, ?, ?)`)
 	if err != nil {
 		log.Error(err)
 	}
@@ -207,9 +244,3 @@ func (db *DB) InsertBookmark(bk *Bookmark) {
 		log.Error(err)
 	}
 }
-
-// CleanTags sanitize the tags strings stored in the gosuki database.
-// The input is a string of tags separated by [TagJoinSep].
-// func CleanTags(tags string) string {
-//
-// }

@@ -22,18 +22,33 @@
 package database
 
 const (
-	CacheName = "memcache"
+	CacheName   = "memcache"
+	L2CacheName = "memcache_l2"
 	//MemcacheFmt = "file:%s?mode=memory&cache=shared"
 	//BufferFmt   = "file:%s?mode=memory&cache=shared"
-	DBTypeInMemoryDSN = "file:%s?mode=memory&cache=shared"
+	DBTypeInMemoryDSN = "file:%s?mode=memory&cache=shared&_journal=MEMORY"
 	DBTypeCacheDSN    = DBTypeInMemoryDSN
 )
 
+// Global in-memory cache hierarchy for the gosuki database, structured in two
+// levels to optimize performance and reduce unnecessary I/O operations.
+//
+// Cache (level 1 cache) serves as a working buffer that aggregates and merges
+// data from all scanned bookmarks. It acts as the primary cache for real-time
+// operations and is periodically synchronized with L2Cache.
+//
+// L2Cache (level 2 cache) functions as a persistent memory mirror of the on-disk
+// database (gosuki.db). It is updated as a final step after level 1 cache
+// synchronizations from module buffers, enabling checksum-based comparison
+// between levels to detect changes and avoid redundant updates. This ensures
+// efficient data consistency checks and minimizes write operations to the
+// underlying storage.
+//
+// The two-level architecture balances speed (level 1) with data integrity (level 2),
+// while L2Cache maintains a faithful in-memory replica of the on-disk database state.
 var (
-	// Global in memory cache of gosuki database
-	// Main in memory db, is synced with disc
-	// `CacheDB` is a memory replica of disk db
-	Cache = &CacheDB{}
+	Cache   = &CacheDB{}
+	L2Cache = &CacheDB{}
 )
 
 type CacheDB struct {
@@ -62,6 +77,15 @@ func initCache() {
 	}
 
 	err = Cache.InitSchema()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	L2Cache.DB, err = NewDB(L2CacheName, "", DBTypeCacheDSN).Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = L2Cache.InitSchema()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -58,6 +58,14 @@ func (t *Tags) PreSanitize() *Tags {
 	return t
 }
 
+// Sorts the tags in the same order, order does not matter
+func (t *Tags) Sort() *Tags {
+	slices.SortFunc(t.tags, func(a, b string) int {
+		return strings.Compare(strings.ToLower(a), strings.ToLower(b))
+	})
+	return t
+}
+
 // String representation of the tags.
 // It can wrap the tags with the delim if wrap is true. This is done for
 // compatibility with Buku DB format.

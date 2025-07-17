@@ -57,6 +57,7 @@ func Init() {
 	dbpath := GetDBPath()
 	// If local db exists load it to cacheDB
 	if exists, err := utils.CheckFileExists(dbpath); exists {
+
 		log.Infof("<%s> exists, preloading to cache", dbpath)
 		err = InitDiskConn(dbpath)
 		if err != nil {
@@ -68,10 +69,19 @@ func Init() {
 			log.Fatal(err)
 		}
 
+		// TODO!: make both syncs with a single read operation ?
+		// first sync to the l1 cache from disk
 		err = Cache.SyncFromDisk(dbpath)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Also sync l2 cache from disk
+		err = L2Cache.SyncFromDisk(dbpath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	} else {
 		if err != nil {
 			log.Error(err)

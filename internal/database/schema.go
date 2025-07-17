@@ -29,25 +29,26 @@ import (
 //
 // # Schema versions:
 // 1: initial version
-const CurrentSchemaVersion = 1
+const CurrentSchemaVersion = 2
 
 const (
 
 	// metadata: name or title of resource
 	// modified: time.Now().Unix()
-	//
+	// desc:
 	// flags: designed to be extended in future using bitwise masks
 	// Masks:
 	//     0b00000001: set title immutable ((do not change title when updating the bookmarks from the web ))
 	QCreateSchema = `
-    CREATE TABLE if not exists gskbookmarks (
-		URL text NOT NULL PRIMARY KEY,
-		metadata text default '',
-		tags text default '',
-		desc text default '',
-		modified integer default (strftime('%s')),
-		flags integer default 0,
-		module text default '' 
+    CREATE TABLE IF NOT EXISTS gskbookmarks (
+		URL TEXT NOT NULL PRIMARY KEY,
+		metadata TEXT default '',
+		tags TEXT default '',
+		desc TEXT default '',
+		modified INTEGER DEFAULT (strftime('%s')),
+		flags INTEGER DEFAULT 0,
+		module TEXT DEFAULT '' ,
+		xhsum TEXT DEFAULT ''
 	)`
 
 	// The following view and and triggers provide buku compatibility
@@ -98,7 +99,12 @@ func checkDBVersion(db *DB) error {
 	var err error
 	var version int
 	var tableExists bool
-	log.Debug("checking DB version")
+	log.Debug("checking schema version")
+
+	// only apply checks and migrations to db on disk
+	if db.Name != "gosuki_db" {
+		return nil
+	}
 
 	// Create schema_version table if not exists
 	_, err = db.Handle.Exec(QCreateSchemaVersion)
@@ -118,90 +124,86 @@ func checkDBVersion(db *DB) error {
 		log.Debug("created schema_version table")
 
 		// checking if ondisk db needs to be upgraded to version 1
-		if db.Name == "gosuki_db" {
+		err = db.Handle.QueryRowx("SELECT 1 FROM sqlite_master WHERE type='table' AND name='bookmarks'").Scan(&tableExists)
+		if err != nil && err != sql.ErrNoRows {
+			return DBError{DBName: db.Name, Err: err}
+		}
 
-			err = db.Handle.QueryRowx("SELECT 1 FROM sqlite_master WHERE type='table' AND name='bookmarks'").Scan(&tableExists)
+		// Upgrade ondisk gosuki db to version 1 with schema tracking
+		if tableExists {
+			log.Debug("bookmarks table exists: migrating to v1")
+
+			tx, err := db.Handle.Begin()
 			if err != nil {
 				return DBError{DBName: db.Name, Err: err}
 			}
 
-			// Upgrade ondisk gosuki db to version 1 with schema tracking
-			if tableExists {
-				log.Debug("bookmarks table exists: migrating to v1")
+			log.Debug("creating gskbookmarks table")
+			if _, err = tx.Exec(QCreateSchema); err != nil {
+				tx.Rollback()
+				return DBError{DBName: db.Name, Err: err}
+			}
 
-				tx, err := db.Handle.Begin()
-				if err != nil {
-					return DBError{DBName: db.Name, Err: err}
-				}
+			log.Debug("moving table bookmarks to gskbookmarks")
+			if _, err := tx.Exec("INSERT INTO gskbookmarks (URL, metadata, tags, desc, modified, flags, module) SELECT URL, metadata, tags, desc, modified, flags, module FROM bookmarks"); err != nil {
+				tx.Rollback()
+				return DBError{DBName: db.Name, Err: err}
+			}
 
-				log.Debug("creating gskbookmarks table")
-				if _, err = tx.Exec(QCreateSchema); err != nil {
-					tx.Rollback()
-					return DBError{DBName: db.Name, Err: err}
-				}
+			log.Debug("dropping `bookmarks` table")
+			if _, err := tx.Exec("DROP TABLE bookmarks"); err != nil {
+				tx.Rollback()
+				return DBError{DBName: db.Name, Err: err}
+			}
 
-				log.Debug("moving table bookmarks to gskbookmarks")
-				if _, err := tx.Exec("INSERT INTO gskbookmarks (URL, metadata, tags, desc, modified, flags, module) SELECT URL, metadata, tags, desc, modified, flags, module FROM bookmarks"); err != nil {
-					tx.Rollback()
-					return DBError{DBName: db.Name, Err: err}
-				}
+			log.Debug("creating `bookmarks` view")
+			if _, err = tx.Exec(QCreateView); err != nil {
+				tx.Rollback()
+				return DBError{DBName: db.Name, Err: err}
+			}
 
-				log.Debug("dropping `bookmarks` table")
-				if _, err := tx.Exec("DROP TABLE bookmarks"); err != nil {
-					tx.Rollback()
-					return DBError{DBName: db.Name, Err: err}
-				}
+			if _, err = tx.Exec(QCreateInsertTrigger); err != nil {
+				tx.Rollback()
+				return DBError{DBName: db.Name, Err: err}
+			}
 
-				log.Debug("creating `bookmarks` view")
-				if _, err = tx.Exec(QCreateView); err != nil {
-					tx.Rollback()
-					return DBError{DBName: db.Name, Err: err}
-				}
+			if _, err = tx.Exec(QCreateUpdateTrigger); err != nil {
+				tx.Rollback()
+				return DBError{DBName: db.Name, Err: err}
+			}
 
-				if _, err = tx.Exec(QCreateInsertTrigger); err != nil {
-					tx.Rollback()
-					return DBError{DBName: db.Name, Err: err}
-				}
-
-				if _, err = tx.Exec(QCreateUpdateTrigger); err != nil {
-					tx.Rollback()
-					return DBError{DBName: db.Name, Err: err}
-				}
-
-				if err = tx.Commit(); err != nil {
-					return DBError{DBName: db.Name, Err: err}
-				}
+			if err = tx.Commit(); err != nil {
+				return DBError{DBName: db.Name, Err: err}
 			}
 		}
 
 		version = 1
 	}
 
-	log.Debug("schema", "version", version)
-
 	if version > CurrentSchemaVersion {
 		return fmt.Errorf("unrecognized db version %d: current=%d", version, CurrentSchemaVersion)
 	}
 
 	// Apply migrations in the future
-	// if version < CurrentSchemaVersion {
-	// 	for version < CurrentSchemaVersion {
-	// 		switch version {
-	// 		case 1:
-	// 			if err := db.migrateToVersion2(); err != nil {
-	// 				return err
-	// 			}
-	// 			version = 2
-	// 		}
-	// 	}
-	//
-	// }
+	if version < CurrentSchemaVersion {
+		for version < CurrentSchemaVersion {
+			switch version {
+			case 1:
+				if err = db.migrateToVersion2(); err != nil {
+					return err
+				}
+				version = 2
+			}
+		}
+	}
 
 	// Update the version in the schema_version table
-	// _, err = db.Handle.Exec("UPDATE schema_version SET version = ?", version)
-	// if err != nil {
-	//     return DBError{DBName: db.Name, Err: err}
-	// }
+	_, err = db.Handle.Exec("UPDATE schema_version SET version = ?", version)
+	if err != nil {
+		return DBError{DBName: db.Name, Err: err}
+	}
+
+	log.Debug("schema", "version", version)
 
 	return err
 }
@@ -240,7 +242,7 @@ func (db *DB) InitSchema() error {
 
 	err = checkDBVersion(db)
 	if err != nil {
-		return err
+		return fmt.Errorf("checking schema version: %w", err)
 	}
 
 	log.Debugf("<%s> initialized", db.Name)

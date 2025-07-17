@@ -32,6 +32,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/OneOfOne/xxhash"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 
 	"github.com/blob42/gosuki/internal/utils"
@@ -255,6 +256,7 @@ func (db *DB) Init() (*DB, error) {
 
 	// Detect if database file is locked
 	if db.Type == DBTypeRegularFile {
+
 		if locked, err := db.Locked(); err != nil {
 			return nil, DBError{DBName: db.Name, Err: err}
 		} else if locked {
@@ -281,7 +283,7 @@ func (db *DB) Init() (*DB, error) {
 	return db, nil
 }
 
-func (db *DB) AttachTo(attached *DB) {
+func (db *DB) Attach(attached *DB) error {
 
 	stmtStr := fmt.Sprintf("ATTACH DATABASE '%s' AS '%s'",
 		attached.Path,
@@ -289,14 +291,15 @@ func (db *DB) AttachTo(attached *DB) {
 	_, err := db.Handle.Exec(stmtStr)
 
 	if err != nil {
-		log.Error(err)
+		return err
 	}
 
 	db.AttachedTo = append(db.AttachedTo, attached.Name)
+	return nil
 }
 
 func (db *DB) Close() error {
-	log.Debugf("Closing DB <%s>", db.Name)
+	log.Debugf("closing DB <%s>", db.Name)
 
 	if db.Handle == nil {
 		log.Debugf("<%s> db handle is nil,  already closed ?", db.Name)
@@ -376,6 +379,22 @@ func SQLFuzzy(test, in string) bool {
 	return fuzzy.MatchFold(test, in)
 }
 
+func SQLxxHash(in string) string {
+	return fmt.Sprintf("%d", xxhash.ChecksumString64(in))
+}
+
+// Calculates xxhash sum for a bookmark
+func xhsum(url, metadata, tags, desc string) string {
+	input := fmt.Sprintf(
+		"%s+%s+%s+%s",
+		url,
+		metadata,
+		tags,
+		desc,
+	)
+	return SQLxxHash(input)
+}
+
 // RegisterSqliteHooks registers a SQLite backup hook with additional connection tracking.
 func RegisterSqliteHooks() {
 
@@ -390,7 +409,8 @@ func RegisterSqliteHooks() {
 					return err
 				}
 
-				return nil
+				return conn.RegisterFunc("xhash", SQLxxHash, true)
+
 			},
 		})
 
