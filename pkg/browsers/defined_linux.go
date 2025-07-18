@@ -38,7 +38,8 @@ var (
 		"qutebrowser",
 		Qutebrowser,
 		"~/.config/qutebrowser",
-		"/to/do/snap/dir",
+		"/nonexistent",
+		"/nonexistent",
 	}
 )
 
@@ -47,12 +48,14 @@ var (
 	Chrome = ChromeBrowser(
 		"chrome",
 		"~/.config/google-chrome",
-		"",
+		"/nonexistent",
+		"~/.var/app/com.google.Chrome/config/google-chrome",
 	)
 	Chromium = ChromeBrowser(
 		"chromium",
 		"~/.config/chromium",
 		"~/snap/chromium/common/chromium/",
+		"~/.var/app/org.chromium.Chromium/config/chromium",
 	)
 )
 
@@ -62,12 +65,14 @@ var (
 		"firefox",
 		"~/.mozilla/firefox",
 		"~/snap/firefox/common/.mozilla/firefox",
+		"~/.var/app/org.mozilla.firefox/.mozilla/firefox",
 	)
 
 	Librewolf = MozBrowser(
 		"librewolf",
 		"~/.librewolf",
-		"",
+		"/nonexistent",
+		"~/.var/app/io.gitlab.librewolf-community/.librewolf",
 	)
 )
 

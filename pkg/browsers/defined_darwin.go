@@ -38,7 +38,7 @@ var (
 		"qutebrowser",
 		Qutebrowser,
 		"~/Library/Application Support/qutebrowser",
-		"",
+		"", "",
 	}
 )
 
@@ -47,12 +47,12 @@ var (
 	Chrome = ChromeBrowser(
 		"chrome",
 		"~/Library/Application Support/Google/Chrome",
-		"",
+		"", "",
 	)
 	Chromium = ChromeBrowser(
 		"chromium",
 		"~/Library/Application Support/chromium",
-		"",
+		"", "",
 	)
 )
 
@@ -61,13 +61,13 @@ var (
 	Firefox = MozBrowser(
 		"firefox",
 		"~/Library/Application Support/Firefox",
-		"",
+		"", "",
 	)
 
 	Librewolf = MozBrowser(
 		"librewolf",
 		"~/Library/Application Support/Librewolf",
-		"",
+		"", "",
 	)
 )
 

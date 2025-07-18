@@ -40,8 +40,11 @@ type BrowserDef struct {
 	// Base browser directory path
 	baseDir string
 
-	// (linux) path to snap package base dir
+	// (linux only) path to snap package base dir
 	snapDir string
+
+	// (linux only) path to flatpak package base dir
+	flatDir string
 }
 
 func (b BrowserDef) Detect() bool {
@@ -58,21 +61,23 @@ func (b BrowserDef) Detect() bool {
 	return true
 }
 
-func MozBrowser(flavour, base, snap string) BrowserDef {
+func MozBrowser(flavour, base, snap, flat string) BrowserDef {
 	return BrowserDef{
 		Flavour: flavour,
 		baseDir: base,
 		Family:  Mozilla,
 		snapDir: snap,
+		flatDir: flat,
 	}
 }
 
-func ChromeBrowser(flavour, base, snap string) BrowserDef {
+func ChromeBrowser(flavour, base, snap, flat string) BrowserDef {
 	return BrowserDef{
 		Flavour: flavour,
 		baseDir: base,
 		Family:  ChromeBased,
 		snapDir: snap,
+		flatDir: flat,
 	}
 }
 

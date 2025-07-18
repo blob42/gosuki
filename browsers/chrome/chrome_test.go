@@ -98,7 +98,7 @@ func TestLoadLocalState(t *testing.T) {
 func TestGetProfiles(t *testing.T) {
 	var needle *profiles.Profile
 
-	browsers.AddBrowserDef(browsers.ChromeBrowser(BrowserName, "testdata", ""))
+	browsers.AddBrowserDef(browsers.ChromeBrowser(BrowserName, "testdata", "", ""))
 	ch := &Chrome{}
 	profiles, err := ch.GetProfiles(BrowserName)
 	if err != nil {

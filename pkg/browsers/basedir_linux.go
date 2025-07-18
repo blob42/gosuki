@@ -29,6 +29,11 @@ import (
 	"github.com/blob42/gosuki/pkg/logging"
 )
 
+const (
+	Flat = "flat"
+	Snap = "snap"
+)
+
 var log = logging.GetLogger("BROWSERS")
 
 // expands to the full path to the base directory
@@ -39,37 +44,42 @@ var log = logging.GetLogger("BROWSERS")
 
 // base directory without normalization
 func (b BrowserDef) BaseDir() string {
-	if b.snapDir != "" && isSnap(b.snapDir) {
+	if b.flatDir != "" && isValidDir(b.flatDir, Flat) {
+		return b.flatDir
+	}
+	if b.snapDir != "" && isValidDir(b.snapDir, Snap) {
 		return b.snapDir
 	}
 	return b.baseDir
 }
 
 // Expands to the full path of base directory
-// If browser installed as snap package, expand to the snap base dir
+// If browser installed as snap or flatpak, expand to respective base dir
 func (b BrowserDef) ExpandBaseDir() (string, error) {
-	if b.snapDir != "" && isSnap(b.snapDir) {
+	if b.flatDir != "" && isValidDir(b.flatDir, Flat) {
+		return utils.ExpandPath(b.flatDir)
+	}
+	if b.snapDir != "" && isValidDir(b.snapDir, Snap) {
 		return utils.ExpandPath(b.snapDir)
 	}
-
 	return utils.ExpandPath(b.baseDir)
 }
 
 // detects whether path is a snap directory
-func isSnap(dir string) bool {
+func isValidDir(dir string, pt string) bool {
 	if dir == "" {
 		return false
 	}
 
 	normDir, err := utils.ExpandOnly(dir)
 	if err != nil {
-		log.Errorf("snap path: %s", err)
+		log.Errorf("%s path: %s", pt, err)
 		return false
 	}
 
 	ok, err := utils.DirExists(normDir)
 	if err != nil {
-		log.Debugf("snap path: %s : %s", dir, err)
+		log.Debugf("%s path: %s : %s", pt, dir, err)
 	}
 	return ok
 }
