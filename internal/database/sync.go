@@ -131,12 +131,14 @@ func (src *DB) SyncTo(dst *DB) {
 			desc,
 			modified,
 			flags,
+			module,
 			xhsum
 		) = (
 			CASE WHEN ? != '' THEN ? ELSE metadata END,
 			?,
 			CASE WHEN ? != '' THEN ? ELSE desc END,
 			strftime('%s'),
+			?,
 			?,
 			?
 		)
@@ -271,6 +273,7 @@ func (src *DB) SyncTo(dst *DB) {
 			scan.Desc,
 			scan.Desc,
 			0, //flags
+			scan.Module,
 			newHash,
 			scan.URL,
 		)
