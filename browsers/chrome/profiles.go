@@ -66,10 +66,11 @@ func (*ChromeProfileManager) GetProfiles(flavour string) ([]*profiles.Profile, e
 
 	for id, profile := range state.Profile.InfoCache {
 		result = append(result, &profiles.Profile{
-			ID:      id,
-			Name:    profile.Name,
-			Path:    id,
-			BaseDir: baseDir,
+			ID:         id,
+			Name:       profile.Name,
+			Path:       id,
+			BaseDir:    baseDir,
+			IsRelative: true,
 		})
 	}
 

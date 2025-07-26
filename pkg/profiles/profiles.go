@@ -83,13 +83,19 @@ type Profile struct {
 	// This is usually the name of the directory where the profile is stored
 	Name string
 
-	// relative path to profile from base dir
+	// path to profile
+	// relative when IsRelative is true
 	Path string
+
+	IsRelative bool
 
 	// Base dir of the profile
 	BaseDir string
 }
 
 func (p Profile) AbsolutePath() (string, error) {
+	if !p.IsRelative {
+		return utils.ExpandPath(p.Path)
+	}
 	return utils.ExpandPath(p.BaseDir, p.Path)
 }

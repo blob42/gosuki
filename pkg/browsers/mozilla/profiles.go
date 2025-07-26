@@ -106,7 +106,7 @@ func (pm *MozProfileManager) GetProfiles(flavour string) ([]*profiles.Profile, e
 				BaseDir: baseDir,
 			}
 
-			err := section.MapTo(p)
+			err = section.MapTo(p)
 			if err != nil {
 				return nil, err
 			}
