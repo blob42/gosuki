@@ -65,7 +65,7 @@ func startDaemon(ctx context.Context, cmd *cli.Command) error {
 
 	manager := initManager(false)
 
-	startNormalDaemon(c, manager)
+	startNormalDaemon(ctx, cmd, manager)
 	gui.RunSystray(manager)
 	<-manager.Quit
 	return nil
