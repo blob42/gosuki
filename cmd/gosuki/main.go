@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/blob42/gosuki/internal/database"
 	"github.com/blob42/gosuki/internal/utils"
 	"github.com/blob42/gosuki/pkg/build"
 	"github.com/blob42/gosuki/pkg/config"

@@ -24,6 +24,10 @@
 package modules
 
 import (
+	"context"
+	"fmt"
+	"time"
+
 	"github.com/blob42/gosuki/pkg/manager"
 )
 
@@ -39,8 +43,9 @@ type ModMsgType string
 
 // types of messages passed between modules
 const (
-	MsgTriggerP2PSync = "trigger-sync"
-	MsgHello          = "hello"
+	MsgTriggerSync = "trigger-sync"
+	MsgHello       = "mod-hello"
+	MsgPanic       = "panic"
 )
 
 // channel for sending messages to modules
@@ -53,17 +58,26 @@ var ModMsgBus = make(chan ModMsg) // Channel for intra-process message passing
 
 // Modules that listen to messages on the inter module channels
 type MsgListener interface {
-	MsgListen(<-chan ModMsg)
+	MsgListen(context.Context, <-chan ModMsg)
 }
 
 // Work unit for modules that implement the MsgListener interface
 type Listener struct {
+	Ctx   context.Context
 	Queue chan ModMsg
 	MsgListener
 }
 
 func (lw Listener) Run(m manager.UnitManager) {
-	go lw.MsgListen(lw.Queue)
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				m.Panic(fmt.Errorf("%v", err))
+			}
+		}()
+		lw.MsgListen(lw.Ctx, lw.Queue)
+	}()
+
 	<-m.ShouldStop()
 	m.Done()
 }
@@ -86,9 +100,9 @@ func (mm *modMsgDispatcher) Run(m manager.UnitManager) {
 	go func() {
 		log.Info("dispatching module messages")
 		for msg := range ModMsgBus {
-			log.Debugf("dispatching mod message %s", msg.Type)
+			log.Debug("dispatching mod message", "msg", msg.Type, "to", msg.To)
 			if dst, ok := mm.listeners[msg.To]; ok {
-				log.Debugf("sending msg=%s to=%s", msg.Type, msg.To)
+				log.Trace("sending", "msg", msg.Type, "to-mod", msg.To)
 				dst.queue <- msg
 			} else { // discard
 				log.Debugf("target %s not available, discarding msg=%s", msg.To, msg.Type)

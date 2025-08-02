@@ -179,6 +179,7 @@ func startNormalDaemon(ctx context.Context, cmd *cli.Command, mngr *manager.Mana
 			// Check if it's also a MsgListener
 			if isMsgListener {
 				listeningWorker := modules.Listener{
+					Ctx:         ctx,
 					Queue:       listenerQueue,
 					MsgListener: listener,
 				}
@@ -192,6 +193,7 @@ func startNormalDaemon(ctx context.Context, cmd *cli.Command, mngr *manager.Mana
 			// Check if it's also a MsgListener
 			if isMsgListener {
 				listeningWorker := modules.Listener{
+					Ctx:         ctx,
 					Queue:       listenerQueue,
 					MsgListener: listener,
 				}
@@ -199,6 +201,7 @@ func startNormalDaemon(ctx context.Context, cmd *cli.Command, mngr *manager.Mana
 			}
 		} else if isMsgListener {
 			worker = modules.Listener{
+				Ctx:         ctx,
 				Queue:       listenerQueue,
 				MsgListener: listener,
 			}
