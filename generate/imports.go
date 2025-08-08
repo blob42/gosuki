@@ -21,6 +21,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"go/build"
 	"io/fs"
@@ -34,7 +35,9 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-const targetPrefix = "./mods/"
+var (
+	fModsDir = flag.String("mods", "mods", "path to mods dir")
+)
 
 func getGoMod() (string, error) {
 	cmd := exec.Command("go", "list")
@@ -47,6 +50,9 @@ func getGoMod() (string, error) {
 }
 
 func main() {
+	flag.Parse()
+	targetPrefix := filepath.Join("../", *fModsDir) + "/"
+
 	module, err := getGoMod()
 	if err != nil {
 		log.Fatalf("error: %s", err)
@@ -66,11 +72,23 @@ func main() {
 
 	disabledRe := regexp.MustCompile(`\.disabled$`)
 
+	file, err := os.OpenFile("generated_imports.go", os.O_RDWR|os.O_CREATE, 0644)
+	defer func() {
+		if err = file.Close(); err != nil {
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	header := `package mods
 
 import (
 `
-	fmt.Print(header)
+	fmt.Fprint(file, header)
 	err = filepath.WalkDir(targetPrefix, func(path string, d fs.DirEntry, err error) error {
 		// fmt.Printf("%#v\n", path)
 		// fmt.Printf("%#v\n", targetPrefix)
@@ -109,12 +127,12 @@ import (
 
 		for _, pkg := range pkgs {
 			// pretty.Print(pkg)
-			fmt.Printf("\t_ \"%s\"\n", pkg.ID)
+			fmt.Fprintf(file, "\t_ \"%s\"\n", pkg.ID)
 		}
 
 		return nil
 	})
-	fmt.Println(")")
+	fmt.Fprintln(file, ")")
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error walking the path %q: %v\n", targetPrefix, err)

@@ -71,7 +71,7 @@ docs:
 
 
 genimports: 
-	@go run generate/imports.go | tee mods/generated_imports.go
+	@go generate ./...
 
 # Distribution packaging
 ARCH := x86_64
