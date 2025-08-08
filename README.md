@@ -201,13 +201,11 @@ If you like this project consider starring the repo and [supporting the effort](
 
 - [x] **Multi-device Sync** - [Synchronization between multiple devices](https://gosuki.net/docs/features/multi-device-sync/)
 - [ ] **Archival** - Archive bookmarks in a portable format for offline access.
-- [ ] **Packaging**: Package for all common Linux distros, MacOS brew and FreeBSD ports
-
-
 - [ ] **Linkrot** - Automatically identify broken links and replace with web.archive.org alternatives
 - [ ] **Metadata Refresh** - Automatically clean and update tags/metadata for existing bookmarks
-- [ ] **Browser Sync** - Push changes back to browsers for consistent bookmark management
 - [ ] **Management UI** - Intuitive interface for organizing and pruning bookmarks
+- [ ] **Browser Sync** - Push changes back to browsers for consistent bookmark management
+- [ ] **Packaging**: Package for all common Linux distros, MacOS brew and FreeBSD ports
 - [ ] **More Platforms** - FreeBSD, Windows, Android? 
 
 ## Support
