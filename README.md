@@ -11,7 +11,8 @@
 </h4>
  <h5 align="center">
   <a href="#installation">Install</a> |
-  <a href="#-features">Feautres</a>
+  <a href="#-features">Feautres</a> |
+  <a href="https://github.com/blob42/gosuki/blob/master/docs/faq.md">Faq</a>
 </h5>
 
 
