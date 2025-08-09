@@ -27,6 +27,7 @@ package browsers
 var DefinedBrowsers = []BrowserDef{
 	Firefox,
 	Librewolf,
+	Waterfox,
 	Chrome,
 	Chromium,
 	Brave,
@@ -80,6 +81,13 @@ var (
 		"~/.librewolf",
 		"/nonexistent",
 		"~/.var/app/io.gitlab.librewolf-community/.librewolf",
+	)
+
+	Waterfox = MozBrowser(
+		"waterfox",
+		"~/.waterfox",
+		"/nonexistent",
+		"~/.var/app/net.waterfox.waterfox/.waterfox",
 	)
 )
 
