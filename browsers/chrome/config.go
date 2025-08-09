@@ -46,29 +46,6 @@ var (
 	ChromeCfg = NewChromeConfig()
 )
 
-func setBookmarkDir(cc *ChromeConfig) {
-	var err error
-
-	// load profile from config
-	var profile *profiles.Profile
-
-	// In chrome we need to identify the profiles by their ID to get the correct
-	// path
-	if profile, err = ProfileManager.GetProfileByID(BrowserName, cc.Profile); err != nil {
-		log.Warn(err)
-	} else {
-		bookmarkDir, err := profile.AbsolutePath()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cc.BkDir = bookmarkDir
-		log.Debugf("Using profile %s", bookmarkDir)
-
-	}
-
-}
-
 func NewChromeConfig() *ChromeConfig {
 
 	config := &ChromeConfig{
@@ -88,8 +65,6 @@ func NewChromeConfig() *ChromeConfig {
 			WatchAllProfiles: true,
 		},
 	}
-
-	setBookmarkDir(config)
 
 	return config
 }

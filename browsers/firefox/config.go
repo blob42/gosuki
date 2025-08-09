@@ -76,30 +76,6 @@ type FirefoxConfig struct {
 	*modules.BrowserConfig `toml:"-"`
 }
 
-func setBookmarkDir(fc *FirefoxConfig) {
-	var err error
-
-	// load profile from config
-	var profile *profiles.Profile
-	if profile, err = FirefoxProfileManager.GetProfileByName(
-		BrowserName,
-		fc.Profile,
-	); err != nil {
-		//HACK: properly display error, refactor this func
-		// setBookmarkDir() should not be called from init()
-		log.Infof("error: %s", err)
-	} else {
-		bookmarkDir, err := profile.AbsolutePath()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fc.BkDir = bookmarkDir
-		log.Debugf("Using profile %s", bookmarkDir)
-	}
-
-}
-
 func NewFirefoxConfig() *FirefoxConfig {
 
 	cfg := &FirefoxConfig{
@@ -130,8 +106,6 @@ func NewFirefoxConfig() *FirefoxConfig {
 			WatchAllProfiles: true,
 		},
 	}
-
-	setBookmarkDir(cfg)
 
 	return cfg
 }
