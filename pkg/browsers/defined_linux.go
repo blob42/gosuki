@@ -87,7 +87,7 @@ var (
 		"waterfox",
 		"~/.waterfox",
 		"/nonexistent",
-		"~/.var/app/net.waterfox.waterfox",
+		"~/.var/app/net.waterfox.waterfox/.waterfox",
 	)
 )
 
