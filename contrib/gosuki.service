@@ -3,7 +3,7 @@ Description=gosuki bookmark manager daemon
 
 [Service]
 ExecStart=PATH_TO_GOSUKI_BINARY start
-#Environment="GOSUKI_DEBUG=2"
+#Environment="GOSUKI_DEBUG=info"
 TimeoutStartSec=10
 PIDFile=%t/gosuki.pid
 
