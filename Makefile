@@ -102,6 +102,11 @@ dist-macos: clean bundle-macos
 	tar -czf dist/$(release_dir).tar.gz -C dist/ $(release_dir)
 
 
+checksums:
+	cd dist && sha256sum *.tar.gz *.zip > SHA256SUMS
+	rm -f dist/SHA256SUMS.sig
+	gpg --detach-sign -u $(GPG_SIGN_KEY) dist/SHA256SUMS
+
 
 testsum:
 ifeq (, $(shell which gotestsum))
@@ -168,6 +173,7 @@ bundle-macos: release
  		testsum \
  		ci-test \
  		debug \
+		checksums \
  		prepare \
  		shared \
 		genimports \
