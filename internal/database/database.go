@@ -51,9 +51,6 @@ var (
 	// List of sql connections, used to do a sql backup
 	_sql3BackupConns []*sqlite3.SQLiteConn
 
-	//TEST: expanded in init()
-	DefaultDBDir = "~/.local/share/gosuki/"
-
 	// Handle to on-disk gosuki database
 	DiskDB *DB
 
@@ -445,14 +442,17 @@ func init() {
 	var dataDir string
 	var err error
 
-	Config = &dbConfig{
-		SyncInterval: time.Second * 4,
-		Path:         DefaultDBDir,
-	}
-	config.RegisterConfigurator("database", config.AsConfigurator(Config))
-
 	if dataDir, err = utils.GetDataDir(); err != nil {
 		log.Fatal(err)
 	}
-	DefaultDBDir = filepath.Join(dataDir, "gosuki")
+
+	dbPath := filepath.Join(dataDir, "gosuki/gosuki.db")
+
+	Config = &dbConfig{
+		SyncInterval: time.Second * 4,
+		Path:         dbPath,
+	}
+
+	config.RegisterConfigurator("database", config.AsConfigurator(Config))
+
 }
