@@ -81,6 +81,13 @@ var (
 		"/nonexistent",
 		"~/.var/app/io.gitlab.librewolf-community/.librewolf",
 	)
+
+	Waterfox = MozBrowser(
+		"waterfox",
+		"~/.waterfox",
+		"/nonexistent",
+		"~/.var/app/net.waterfox.waterfox",
+	)
 )
 
 func AddBrowserDef(b BrowserDef) {
