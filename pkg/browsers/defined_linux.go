@@ -27,6 +27,7 @@ package browsers
 var DefinedBrowsers = []BrowserDef{
 	Firefox,
 	Librewolf,
+	Waterfox,
 	Chrome,
 	Chromium,
 	Brave,
