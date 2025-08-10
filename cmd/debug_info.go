@@ -23,16 +23,18 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/urfave/cli/v3"
+
+	"github.com/blob42/gosuki/pkg/build"
 )
 
-var ImportCmds = &cli.Command{
-	Name:  "import",
-	Usage: "one-time import from other programs",
-	Description: `The import command provides subcommands to migrate bookmarks from various sources.
-Use the specific import subcommands to perform migrations.`,
-	Commands: []*cli.Command{
-		importBukuDBCmd,
-		importPocketCmd,
+var DebugInfoCmd = &cli.Command{
+	Name:   "debug-info",
+	Hidden: true,
+	Action: func(_ context.Context, _ *cli.Command) error {
+		build.DebugInfo()
+		return nil
 	},
 }

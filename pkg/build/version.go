@@ -23,7 +23,7 @@
 package build
 
 import (
-	"fmt"
+	"runtime"
 	"runtime/debug"
 	"strings"
 )
@@ -58,13 +58,17 @@ func Version() string {
 		return PackageVersion
 	}
 
-	commit := CommitHash
-	if commit != "" {
-		commit = CommitHash[:8]
-	}
-	version := fmt.Sprintf("%s commit=%s", Describe, commit)
+	return Describe
+}
 
-	return version
+func DebugInfo() {
+	println("GoSuki Version:", Version())
+	println("Commit Hash:", CommitHash)
+	println("Go Version:", GoVersion)
+	println("Package Version:", PackageVersion)
+	println("Build Tags:", strings.Join(Tags(), ", "))
+	println("OS:", runtime.GOOS)
+	println("Architecture:", runtime.GOARCH)
 }
 
 // Tags returns the list of build tags that were compiled into the executable.

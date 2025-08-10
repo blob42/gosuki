@@ -37,7 +37,7 @@ import (
 
 var ExportCmds = &cli.Command{
 	Name:        "export",
-	Usage:       "One-time export bookmarks to other formats",
+	Usage:       "One-time export to other formats",
 	Description: `The export command provides functionality to export bookmarks to other browser or application formats. `,
 	Commands: []*cli.Command{
 		exportHTMLCmd,

@@ -158,6 +158,7 @@ func main() {
 		cmd.ModuleCmds,
 		cmd.ImportCmds,
 		cmd.ExportCmds,
+		cmd.DebugInfoCmd,
 	}...)
 
 	app.Commands = EntryCommands

@@ -1,0 +1,103 @@
+.TH SUKI 1 "2025" "gosuki" "User Commands"
+.SH NAME
+suki \- gosuki lightweight cli \- the universal bookmark manager
+.SH SYNOPSIS
+.B suki
+[\fIOPTIONS\fR] [\fIKEYWORD\fR [\fIKEYWORD\fR...]]
+.SH DESCRIPTION
+.PP
+.B suki
+is a lightweight, efficient command-line interface designed for querying and managing
+bookmarks stored in gosuki. It offers fast, streamlined access to your bookmark collection
+while maintaining minimal resource usage, making it ideal for frequent use in terminal environments.
+.PP
+The default output format is fully compatible with dmenu and other dmenu-compatible programs,
+enabling seamless integration into your workflow through piping. Additionally,
+.B suki
+supports customizable output formatting through the
+.B -F
+flag, allowing you to tailor the display to your specific needs.
+.SH COMMANDS
+.TP
+\fBfuzzy, f\fR
+fuzzy search anywhere
+.TP
+\fBhelp, h\fR
+Shows a list of commands or help for one command
+.SH OPTIONS
+.TP
+\fB--format string, -f string\fR
+Format output using a custom template
+.TP
+\fB--debug string\fR
+Logging level for all units \fI{trace, debug, info, warn, error, fatal, none}\fR
+You may also specify \fI<global-level>,<unit>=<level>,<unit2>=<level>,...\fR
+Use 'debug=list' to list available units (default: warn) \fI$GOSUKI_DEBUG\fR
+.TP
+\fB--config path, -c path\fR
+Config path (default: ~/.config/gosuki/config.toml)
+.TP
+\fB--db path\fR
+Path where gosuki.db is stored (default: ~/.local/share/gosuki/gosuki.db)
+.TP
+\fB--help, -h\fR
+Show help
+.SH OUTPUT FORMATTING
+.PP
+You can customize the output format using the following placeholders:
+.TP
+\fB%T\fR
+Comma separated list of tags
+.TP
+\fB%u\fR
+URL
+.TP
+\fB%t\fR
+Title
+.TP
+\fB%d\fR
+Description
+.PP
+You can combine these placeholders to create a custom output format. For example:
+.RS
+.B --format "%T, %u: %t"
+.RE
+.SH EXAMPLES
+.IP \(bu 2
+\fBsuki\fR \- Display all bookmarks in dmenu-compatible format
+.IP \(bu 2
+\fBsuki -f "%u | %t"\fR \- Show only bookmark urls
+.IP \(bu 2
+\fBsuki "search term"\fR \- Search for specific bookmarks
+.IP \(bu 2
+\fBsuki | dmenu\fR \- Pipe output to dmenu for interactive selection
+
+.SH SEE ALSO
+gosuki(1), dmenu(1), rofi(1), fzf(1)
+
+.SH AUTHOR
+
+.MT contact@blob42.xyz 
+Chakib Benziane
+.ME 
+
+.SH NOTES
+
+.PP
+Git repository: 
+.UR https://github.com/blob42/gosuki
+.UE
+
+.PP
+Documentation Homepage:
+.UR https://gosuki.net
+.UE
+
+.SH COPYRIGHT
+Copyright \(co 2024\-2025, Chakib Benziane.
+.PP
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+.PP
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+.PP
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.

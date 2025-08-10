@@ -1,0 +1,198 @@
+.TH GOSUKI 1 "2025" "User Commands"
+.SH NAME
+gosuki \- A real-time, multi-browser bookmark manager with modular
+architecture and P2P sync. 
+.SH SYNOPSIS
+.PP
+.B gosuki
+[OPTION...] [COMMAND... ]
+.SH DESCRIPTION
+.PP
+Gosuki is a modular standalone and extension-free bookmark management system
+that centralizes and synchronizes bookmarks across multiple browsers and
+devices. It operates as a lightweight background service (daemon) that
+monitors native browser bookmark files (e.g., Firefox's \f(CWplaces.sqlite\fR,
+Chrome's Bookmarks json files) using OS-level file system watchers, eliminating the need
+for browser extensions.
+.PP
+Gosuki features real-time monitoring of bookmark changes via inotify/kqueue,
+ensuring zero latency in updates. It supports a tagging system that
+automatically flattens folder hierarchies into tag-based metadata (e.g.,
+\f(CW#work\fR for "Work/Projects"). 
+
+.PP
+Since Gosuki does not rely on browser extensions, it can theoretically support
+any browser or API that emits bookmark-like data. Currently it supports
+browsers in the Firefox or Chrome family and has custom support for
+Qutebrowser.
+.PP
+Bookmarks are stored in a SQLite database at
+\fI$XDG_DATA_DIR/gosuki/gosuki.db\fR with a Buku-compatible (see \fBBUKU\fR)
+schema to ensure interoperability. Gosuki can handle multiple browser profiles
+for each
+monitored browser by detecting and aggregating bookmarks into a unified view.
+
+
+.SS Synchronization 
+.PP
+Gosuki offers a two methods to synchronize your bookmarks between multiple
+Gosuki nodes: a real-time automated P2P sync mechanism (Gosuki+), and
+Syncthing as an alternative method for syncing basic bookmark metadata.
+
+
+.SS Importing
+.PP
+Gosuki provides multiple import methods to migrate bookmarks from external
+sources into its unified database. These methods include one-time imports via
+CLI commands and automatic HTML bookmark file monitoring. See to the \fB
+IMPORTING\fR and \fB HTML AUTOIMPORT\fR sections for more details.
+
+.SH OPTIONS
+.TP
+.B \-c, \-\-config path
+Config path (default: ~/.config/gosuki/config.toml)
+.TP
+.B \-\-db path
+Database path (default: ~/.local/share/gosuki/gosuki.db)
+.TP
+.B \-\-debug string 
+\fIsytanx\fR: <global-level>,<unit>=<level>
+.RS
+\fIlevels\fR: trace,debug,info,warn,error,fatal,none. (default:warn)
+.RE
+.IP
+Use \fBdebug=list\fR to list available debug levels and subsystems.
+.TP
+.B \-h, \-\-help
+Show help
+.TP
+.B \-S, \-\-silent
+Suppresses all logging messages, warnings, and errors from being displayed
+during command execution, providing a completely quiet operation mode.
+(default: false)
+.TP
+.B \-T, \-\-tui
+Enable TUI interface (default: false)
+.TP
+.B \-v, \-\-version
+Print version
+.TP
+.B \-\-ff-profile PROFILE
+Set default Firefox profile
+
+.SH BUKU
+Gosuki is interoperable with Buku programs, allowing any Buku tool to
+access the Gosuki database directly. However, Gosuki cannot directly access
+Buku databases and requires explicit migration using the command \fBgosuki
+import buku\fR to convert existing Buku data into Gosuki's format.
+
+.SH IMPORTING
+Gosuki automatically watches all browsers in real time and does not require
+manual importing, but also offers ways to migrate bookmarks from external
+sources into its unified database.
+
+Gosuki provides multiple import methods including one-time imports via CLI
+commands and automatic HTML bookmark file monitoring.
+
+The \fBgosuki import\fR command serves as the primary interface for importing
+bookmarks from various external sources.
+
+.SH HTML AUTOIMPORT
+The HTML autoimport feature allows Gosuki to automatically detect and import
+bookmarks from HTML files in user-defined directories. This is particularly
+useful for syncing browser-generated bookmark exports (e.g., Firefox's HTML
+bookmarks).
+
+To enable HTML autoimport, configure the \fB[html-autoimport]\fR section in
+the config file (\fI$XDG_CONFIG_DIR/gosuki/config.toml\fR):
+
+.RS
+.nf
+[html-autoimport]
+    paths = ["$HOME/shares/bookmarks"]
+.fi
+.RE
+
+.TP
+.B paths
+A list of directories to monitor for HTML bookmark files. Supports environment
+variable expansion (e.g., \fI~/shares/bookmarks\fR).
+
+.SH EXAMPLES
+
+.IP \(bu 2
+Start service:
+.RS 4
+.nf
+gosuki start
+.fi
+.RE
+
+
+.IP \(bu 2
+Start with TUI interface:
+.RS 4
+.nf
+gosuki --tui start
+.fi
+.RE
+
+
+.IP \(bu 2
+List available modules:
+.RS 4
+.nf
+gosuki modules list
+.fi
+.RE
+
+
+.PP
+Import bookmarks from Buku database:
+.RS
+.nf
+gosuki import buku
+.fi
+.RE
+
+.PP
+Import bookmarks from Pocket CSV export:
+.RS
+.nf
+gosuki import pocket /path/to/export.csv
+.fi
+.RE
+
+.SH TUI MODE
+Enable real-time debugging interface with the \fB\-\-tui\fR flag. Shows
+browser detection, module loading status, and bookmark processing in the
+terminal.
+
+.SH SEE ALSO
+suki(1)
+
+.SH AUTHOR
+
+.MT contact@blob42.xyz 
+Chakib Benziane
+.ME 
+
+
+.PP
+Git: 
+.UR https://github.com/blob42/gosuki
+.UE
+
+.PP
+Documentation:
+.UR https://gosuki.net
+.UE
+
+.SH COPYRIGHT
+Copyright \(co 2024\-2025, Chakib Benziane.
+.PP
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+.PP
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+.PP
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.

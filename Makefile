@@ -1,10 +1,12 @@
 PKG := github.com/blob42/gosuki
+CGO_ENABLED=1
 CGO_CFLAGS="-g -Wno-return-local-addr"
 SRC := **/*.go
 GOBUILD := go build -v
 GOINSTALL := go install -v
 GOTEST := go test
 OS := $(shell go env GOOS)
+COMPLETIONS := $(patsubst %,%.completions, fish bash zsh)
 
 # We only return the part inside the double quote here to avoid escape issues
 # when calling the external release script. The second parameter can be used to
@@ -60,7 +62,7 @@ release:
 ifeq ($(OS), darwin)
 	@ sed -i '' 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
 else
-	sed -i 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
+	@ sed -i 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
 endif
 	@$(call print, "Building release gosuki and suki.")
 	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki $(RELEASE_LDFLAGS) ./cmd/gosuki
@@ -128,7 +130,7 @@ bundle-macos: release
 	@echo "Creating macOS app bundle..."
 	@mkdir -p build/gosuki.app/Contents/{MacOS,Resources}
 	@cp build/{gosuki,suki} build/gosuki.app/Contents/MacOS/
-	@cp scripts/macos/launch.sh build/gosuki.app/Contents/MacOS/
+	@cp contrib/macos/launch.sh build/gosuki.app/Contents/MacOS/
 	@chmod +x build/gosuki.app/Contents/MacOS/launch.sh
 	@cp assets/icon/gosuki.icns build/gosuki.app/Contents/Resources/
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > build/gosuki.app/Contents/Info.plist
@@ -163,6 +165,11 @@ bundle-macos: release
 	@echo "App bundle created at build/gosuki.app"
 # endif
 
+completions: $(COMPLETIONS)
+
+%.completions:
+	@go run ./cmd/gosuki -S completion $* > contrib/$@
+
 .PHONY: \
  		all \
  		run \
@@ -178,5 +185,6 @@ bundle-macos: release
  		shared \
 		genimports \
  		dist \
+		completions \
 		dist-macos \
 		bundle-macos
