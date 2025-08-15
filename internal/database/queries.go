@@ -63,23 +63,6 @@ func DefaultPagination() *PaginationParams {
 	return &PaginationParams{1, 50}
 }
 
-func (raws RawBookmarks) AsBookmarks() []*gosuki.Bookmark {
-	res := []*Bookmark{}
-	for _, raw := range raws {
-		tags := tagsFromString(raw.Tags, TagSep)
-		res = append(res, &Bookmark{
-			URL:      raw.URL,
-			Title:    raw.Metadata,
-			Tags:     tags.Get(),
-			Desc:     raw.Desc,
-			Module:   raw.Module,
-			Modified: raw.Modified,
-		})
-	}
-
-	return res
-}
-
 func QueryBookmarksByTag(
 	ctx context.Context,
 	query,

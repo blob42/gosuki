@@ -25,14 +25,14 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"html"
+	"io"
 	"os"
-	"strings"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/urfave/cli/v3"
 
-	"github.com/blob42/gosuki"
 	db "github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/pkg/export"
 )
 
 var ExportCmds = &cli.Command{
@@ -40,16 +40,25 @@ var ExportCmds = &cli.Command{
 	Usage:       "One-time export to other formats",
 	Description: `The export command provides functionality to export bookmarks to other browser or application formats. `,
 	Commands: []*cli.Command{
-		exportHTMLCmd,
+		exportNSHTMLCmd,
+		exportPocketHTMLCmd,
+		exportJSONCmd,
+		exportRSSCmd,
 	},
 }
 
-var exportHTMLCmd = &cli.Command{
+var overwriteFlag = &cli.BoolFlag{
+	Name:    "force",
+	Aliases: []string{"f"},
+	Usage:   "Overwrite existing files without prompting",
+}
+
+var exportNSHTMLCmd = &cli.Command{
 	Name:        "html",
 	Usage:       "Export bookmarks to Netscape bookmark format (HTML)",
 	Description: `Exports all bookmarks to a file in Netscape bookmark format, which is compatible with most modern browsers.`,
 	ArgsUsage:   "path/to/export.html",
-	Action:      exportToHTML,
+	Action:      exportToFormat(export.NetscapeHTML),
 	Arguments: []cli.Argument{
 		&cli.StringArg{
 			Name:      "path",
@@ -59,66 +68,115 @@ var exportHTMLCmd = &cli.Command{
 			},
 		},
 	},
-	Flags: []cli.Flag{
-		&cli.BoolFlag{
-			Name:    "force",
-			Aliases: []string{"f"},
-			Usage:   "Overwrite existing files without prompting",
+	Flags: []cli.Flag{overwriteFlag},
+}
+
+var exportJSONCmd = &cli.Command{
+	Name:        "json",
+	Usage:       "Export bookmarks to JSON format (Pinboard/Wallabag)",
+	Description: `Exports all bookmarks to a file in JSON format compatible with Pinboard and Wallabag.`,
+	ArgsUsage:   "path/to/export.json",
+	Action:      exportToFormat(export.JSON),
+	Arguments: []cli.Argument{
+		&cli.StringArg{
+			Name:      "path",
+			UsageText: "Export bookmarks to JSON format (Pinboard/Wallabag). The exported file can be imported into Pinboard, Wallabag and other applications that support this standard format.",
+			Config: cli.StringConfig{
+				TrimSpace: true,
+			},
 		},
 	},
+	Flags: []cli.Flag{overwriteFlag},
 }
 
-func exportToHTML(ctx context.Context, c *cli.Command) error {
-	path := c.StringArg("path")
+var exportRSSCmd = &cli.Command{
+	Name:        "rss",
+	Usage:       "Export bookmarks to generic RSS XML format",
+	Description: `Exports all bookmarks to a generic RSS XML file, which can be imported into applications that support this standard format.`,
+	ArgsUsage:   "path/to/export.rss",
+	Action:      exportToFormat(export.RSS),
+	Arguments: []cli.Argument{
+		&cli.StringArg{
+			Name:      "path",
+			UsageText: "Export bookmarks to RSS XML format. The exported file can be imported into applications that support this standard format.",
+			Config: cli.StringConfig{
+				TrimSpace: true,
+			},
+		},
+	},
+	Flags: []cli.Flag{overwriteFlag},
+}
 
-	if _, err := os.Stat(path); err == nil && !c.Bool("force") {
-		return fmt.Errorf("file %s already exists. Use -f to overwrite", path)
-	}
+// exports to pocket export html file format
+var exportPocketHTMLCmd = &cli.Command{
+	Name:        "pocket-html",
+	Usage:       "Export bookmarks to Pocket HTML format",
+	Description: `Exports all bookmarks to a file in Pocket HTML format.`,
+	ArgsUsage:   "path/to/export.html",
+	Action:      exportToFormat(export.PocketHTML),
+	Arguments: []cli.Argument{
+		&cli.StringArg{
+			Name:      "path",
+			UsageText: "Export bookmarks to Pocket HTML format. The exported file can be imported into Pocket and other applications that support this standard format.",
+			Config: cli.StringConfig{
+				TrimSpace: true,
+			},
+		},
+	},
+	Flags: []cli.Flag{overwriteFlag},
+}
 
-	db.Init(ctx, c)
-	var rawResults db.RawBookmarks
+func exportToFormat(format int) cli.ActionFunc {
+	return func(ctx context.Context, cmd *cli.Command) error {
+		var rows *sqlx.Rows
+		var exporter export.Exporter
+		var output io.WriteCloser
+		var err error
 
-	err := db.DiskDB.Handle.SelectContext(ctx,
-		&rawResults,
-		`SELECT * FROM gskbookmarks`)
-	if err != nil {
-		return err
-	}
+		path := cmd.StringArg("path")
+		if path == "" {
+			return fmt.Errorf("missing path: ... export %s", cmd.ArgsUsage)
+		}
 
-	htmlContent := generateNetscapeHTML(rawResults.AsBookmarks())
+		if _, err = os.Stat(path); err == nil && !cmd.Bool("force") {
+			return fmt.Errorf("file %s already exists. Use -f to overwrite", path)
+		}
 
-	if path == "-" {
-		if _, err = fmt.Fprint(os.Stdout, htmlContent); err != nil {
+		db.Init(ctx, cmd)
+		if rows, err = db.DiskDB.Handle.QueryxContext(
+			ctx,
+			`SELECT * FROM gskbookmarks`,
+		); err != nil {
 			return err
 		}
-	} else {
 
-		if err := os.WriteFile(path, []byte(htmlContent), 0644); err != nil {
-			return fmt.Errorf("failed to write to %s: %w", path, err)
+		switch format {
+		case export.NetscapeHTML:
+			exporter = &export.NetscapeHTMLExporter{}
+		case export.PocketHTML:
+			exporter = &export.PocketHTMLExporter{}
+		case export.JSON:
+			exporter = &export.JSONExporter{}
+		case export.RSS:
+			exporter = &export.RSSXMLExporter{}
+		default:
+			panic(fmt.Sprintf("unsupported export format %#v", format))
 		}
+
+		if path == "-" {
+			output = os.Stdout
+		} else {
+			output, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+			if err != nil {
+				return err
+			}
+			defer output.Close()
+		}
+		bookExporter := export.NewBookmarksExporter(exporter, output)
+		if format == export.JSON {
+			bookExporter.Separator = ","
+		}
+		return bookExporter.ExportFromRows(rows)
 	}
 
-	return nil
-}
-
-func generateNetscapeHTML(bookmarks []*gosuki.Bookmark) string {
-	var sb strings.Builder
-	sb.WriteString(`<!DOCTYPE NETSCAPE-Bookmark-file-1>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
-<TITLE>Bookmarks</TITLE>
-<H1>Bookmarks</H1>
-<DL><p>
-`)
-
-	for _, b := range bookmarks {
-		sb.WriteString(fmt.Sprintf(`    <DT><A HREF="%s" LAST_MODIFIED="%d">%s</A>
-`,
-			html.EscapeString(b.URL),
-			b.Modified,
-			html.EscapeString(b.Title),
-		))
-	}
-
-	sb.WriteString("</DL>\n")
-	return sb.String()
 }

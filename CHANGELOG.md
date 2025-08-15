@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- new export formats: pocket-html, json(pinboard/wallabag), generic XML-RSS
+
 ## [1.2.1] 2025-08-09
 
 ### Added 
