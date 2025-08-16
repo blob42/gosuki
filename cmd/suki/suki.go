@@ -84,6 +84,7 @@ Usage examples:
 
 	app.Commands = []*cli.Command{
 		FuzzySearchCmd,
+		TagSearchCmd,
 	}
 
 	app.ExitErrHandler = func(ctx context.Context, cli *cli.Command, err error) {

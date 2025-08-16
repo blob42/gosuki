@@ -25,10 +25,12 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/blob42/gosuki"
 	db "github.com/blob42/gosuki/internal/database"
-	"github.com/go-chi/chi/v5"
 )
 
 type Bookmark = gosuki.Bookmark
@@ -134,13 +136,44 @@ func GetBookmarks(r *http.Request) ([]*gosuki.Bookmark, uint, error) {
 	}
 
 	pageParams := GetPaginationParams(r)
+	var (
+		searchByQuery = query != ""
+		searchByTag   = tag != ""
+	)
 
-	if query != "" && tag != "" {
-		qResult, err = db.QueryBookmarksByTag(r.Context(), query, tag, IsFuzzy(r), pageParams)
-	} else if tag != "" {
-		qResult, err = db.BookmarksByTag(r.Context(), tag, pageParams)
-	} else if query != "" {
+	// Search with query AND tags
+	if searchByQuery && searchByTag {
+		if strings.Contains(tag, ",") {
+			// Query with multiple tags
+			qResult, err = db.QueryBookmarksByTags(
+				r.Context(),
+				query,
+				strings.Split(tag, ","),
+				db.TagAnd, // AND tags
+				IsFuzzy(r),
+				pageParams,
+			)
+		} else {
+			qResult, err = db.QueryBookmarksByTag(r.Context(), query, tag, IsFuzzy(r), pageParams)
+		}
+
+		// Tag only search mode
+	} else if searchByTag {
+		//query with many tags
+		if strings.Contains(tag, ",") {
+			qResult, err = db.BookmarksByTags(
+				r.Context(),
+				strings.Split(tag, ","),
+				db.TagAnd,
+				pageParams,
+			)
+		} else {
+			qResult, err = db.BookmarksByTag(r.Context(), tag, pageParams)
+		}
+	} else if searchByQuery {
 		qResult, err = db.QueryBookmarks(r.Context(), query, IsFuzzy(r), pageParams)
+
+		// No filter mode, list all bookmarks paginated
 	} else {
 		qResult, err = db.ListBookmarks(r.Context(), pageParams)
 	}

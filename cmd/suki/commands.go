@@ -39,10 +39,11 @@ type searchOpts struct {
 }
 
 var FuzzySearchCmd = &cli.Command{
-	Name:        "fuzzy",
-	Aliases:     []string{"f"},
-	Usage:       "fuzzy search anywhere",
-	UsageText:   "Uses fuzzy search algorithm on any of the `URL`, `Title` and `Metadata`",
+	Name:    "fuzzy",
+	Aliases: []string{"f"},
+	Usage:   "fuzzy search anywhere",
+	UsageText: "Uses fuzzy search algorithm on any of the `URL`, `Title` and `Metadata`." +
+		"Supports :tag syntax like search command for tag filtering.",
 	Description: "",
 	ArgsUsage:   "",
 	Category:    "",
@@ -51,6 +52,17 @@ var FuzzySearchCmd = &cli.Command{
 			return errors.New("missing search term")
 		}
 		return searchBookmarks(ctx, cmd, searchOpts{true}, cmd.Args().Slice()...)
+	},
+}
+
+var TagSearchCmd = &cli.Command{
+	Name:    "search",
+	Aliases: []string{"s"},
+	Usage:   "search bookmarks by tags with AND/OR operators",
+	UsageText: "suki search \"term :linux,kernel\" - searches for text + both tags\n" +
+		"suki search \":OR linux kernel\" - searches for either tag (case-insensitive)",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		return searchBookmarks(ctx, cmd, searchOpts{false}, cmd.Args().Slice()...)
 	},
 }
 
@@ -117,13 +129,67 @@ func listBookmarks(ctx context.Context, cmd *cli.Command) error {
 }
 
 func searchBookmarks(ctx context.Context, cmd *cli.Command, opts searchOpts, keyword ...string) error {
-	pageParms := db.PaginationParams{
-		Page: 1,
-		Size: -1,
+	// Parse query for : prefix and tag syntax
+	var textQuery string
+	var tags []string
+	var tagCond db.TagCond = db.TagAnd
+
+	if len(keyword) > 0 {
+		fullQuery := strings.Join(keyword, " ")
+
+		// Check if there's a : prefix indicating tags
+		if strings.Contains(fullQuery, ":") {
+			parts := strings.SplitN(fullQuery, ":", 2)
+
+			textQuery = strings.TrimSpace(parts[0])
+
+			// Process tag part
+			tagPart := strings.TrimSpace(parts[1])
+			if strings.HasPrefix(tagPart, "OR ") || strings.Contains(tagPart, " OR ") {
+				tagCond = db.TagOr
+				tags = strings.Fields(strings.TrimPrefix(tagPart, "OR "))
+			} else {
+				tags = strings.Split(tagPart, ",")
+			}
+		} else {
+			textQuery = fullQuery
+		}
 	}
-	result, err := db.QueryBookmarks(ctx, keyword[0], opts.fuzzy, &pageParms)
-	if err != nil {
-		return err
+
+	// Handle different search scenarios
+	if len(tags) > 0 {
+		pageParms := db.PaginationParams{
+			Page: 1,
+			Size: -1,
+		}
+
+		result, err := db.QueryBookmarksByTags(
+			ctx,
+			textQuery,
+			tags,
+			tagCond,
+			opts.fuzzy,
+			&pageParms,
+		)
+		if err != nil {
+			return err
+		}
+		return formatPrint(ctx, cmd, result.Bookmarks)
+	} else {
+		pageParms := db.PaginationParams{
+			Page: 1,
+			Size: -1,
+		}
+
+		result, err := db.QueryBookmarks(
+			ctx,
+			textQuery,
+			opts.fuzzy,
+			&pageParms,
+		)
+		if err != nil {
+			return err
+		}
+		return formatPrint(ctx, cmd, result.Bookmarks)
 	}
-	return formatPrint(ctx, cmd, result.Bookmarks)
 }

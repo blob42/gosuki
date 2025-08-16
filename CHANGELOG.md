@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - new export formats: pocket-html, json(pinboard/wallabag), generic XML-RSS
+- `suki search` command
+- `sudki fuzzy|search [term...] :tag1,tag2` to filter by tags with logical AND
+- `sudki fuzzy|search [term ...] :OR tag1 tag2` to filter by tags with logical OR
+- updated queries and api to filter by query and many tags
 
 ## [1.2.1] 2025-08-09
 
