@@ -20,7 +20,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -43,37 +42,7 @@ type Payload struct {
 	Result  any  `json:"result"`
 }
 
-type ReqIsFuzzy struct{}
 type ResetPage struct{}
-
-func IsFuzzy(r *http.Request) bool {
-	fuzzy := r.Context().Value(ReqIsFuzzy{})
-
-	if v, ok := fuzzy.(bool); ok && v {
-		return true
-	}
-
-	return false
-}
-
-// Find and add fuzzy search parameter to the request context
-func trackFuzzySearch(r *http.Request) *http.Request {
-	var fuzzy bool
-
-	query := r.URL.Query().Get("query")
-
-	if fuzzyParam := r.URL.Query().Get("fuzzy"); fuzzyParam != "" {
-		fuzzy = true
-	}
-
-	// Check if the first character of query is `~`
-	if len(query) > 0 && query[0] == '~' {
-		fuzzy = true
-	}
-
-	rCtx := context.WithValue(r.Context(), ReqIsFuzzy{}, fuzzy)
-	return r.WithContext(rCtx)
-}
 
 func GetPaginationParams(r *http.Request) *db.PaginationParams {
 	pageParams := db.DefaultPagination()
@@ -154,10 +123,15 @@ func GetBookmarks(r *http.Request) ([]*gosuki.Bookmark, uint, error) {
 				pageParams,
 			)
 		} else {
-			qResult, err = db.QueryBookmarksByTag(r.Context(), query, tag, IsFuzzy(r), pageParams)
+			qResult, err = db.QueryBookmarksByTag(r.Context(),
+				query,
+				tag,
+				IsFuzzy(r),
+				pageParams,
+			)
 		}
 
-		// Tag only search mode
+		// Tag based search mode
 	} else if searchByTag {
 		//query with many tags
 		if strings.Contains(tag, ",") {

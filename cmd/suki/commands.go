@@ -31,6 +31,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/blob42/gosuki"
+	"github.com/blob42/gosuki/internal/api"
 	db "github.com/blob42/gosuki/internal/database"
 )
 
@@ -129,67 +130,42 @@ func listBookmarks(ctx context.Context, cmd *cli.Command) error {
 }
 
 func searchBookmarks(ctx context.Context, cmd *cli.Command, opts searchOpts, keyword ...string) error {
-	// Parse query for : prefix and tag syntax
-	var textQuery string
-	var tags []string
-	var tagCond db.TagCond = db.TagAnd
-
-	if len(keyword) > 0 {
-		fullQuery := strings.Join(keyword, " ")
-
-		// Check if there's a : prefix indicating tags
-		if strings.Contains(fullQuery, ":") {
-			parts := strings.SplitN(fullQuery, ":", 2)
-
-			textQuery = strings.TrimSpace(parts[0])
-
-			// Process tag part
-			tagPart := strings.TrimSpace(parts[1])
-			if strings.HasPrefix(tagPart, "OR ") || strings.Contains(tagPart, " OR ") {
-				tagCond = db.TagOr
-				tags = strings.Fields(strings.TrimPrefix(tagPart, "OR "))
-			} else {
-				tags = strings.Split(tagPart, ",")
-			}
-		} else {
-			textQuery = fullQuery
-		}
+	if len(keyword) == 0 {
+		return fmt.Errorf("no search keywords provided")
 	}
 
-	// Handle different search scenarios
-	if len(tags) > 0 {
-		pageParms := db.PaginationParams{
-			Page: 1,
-			Size: -1,
-		}
+	fullQuery := strings.Join(keyword, " ")
+	query := api.ParseSearchQuery(fullQuery)
 
-		result, err := db.QueryBookmarksByTags(
+	var result *db.QueryResult
+	var err error
+
+	pageParms := db.PaginationParams{
+		Page: 1,
+		Size: -1,
+	}
+
+	if len(query.Tags) > 0 {
+		result, err = db.QueryBookmarksByTags(
 			ctx,
-			textQuery,
-			tags,
-			tagCond,
+			query.TextQuery,
+			query.Tags,
+			query.TagCond,
 			opts.fuzzy,
 			&pageParms,
 		)
-		if err != nil {
-			return err
-		}
-		return formatPrint(ctx, cmd, result.Bookmarks)
 	} else {
-		pageParms := db.PaginationParams{
-			Page: 1,
-			Size: -1,
-		}
-
-		result, err := db.QueryBookmarks(
+		result, err = db.QueryBookmarks(
 			ctx,
-			textQuery,
+			query.TextQuery,
 			opts.fuzzy,
 			&pageParms,
 		)
-		if err != nil {
-			return err
-		}
-		return formatPrint(ctx, cmd, result.Bookmarks)
 	}
+
+	if err != nil {
+		return err
+	}
+
+	return formatPrint(ctx, cmd, result.Bookmarks)
 }
