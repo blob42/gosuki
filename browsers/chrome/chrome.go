@@ -33,6 +33,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/OneOfOne/xxhash"
@@ -148,12 +149,26 @@ type Chrome struct {
 
 func (ch *Chrome) Init(ctx *modules.Context, p *profiles.Profile) error {
 	// NOTE: if called without profile setup default profile
+	var err error
+	var profile *profiles.Profile
+
 	if p == nil {
-		prof, err := ProfileManager.GetProfileByID(BrowserName, ch.Profile)
+		profileName := ch.Profile
+
+		// parse flavour
+		parsedProfile := strings.SplitN(profileName, ":", 2)
+		if len(parsedProfile) > 1 {
+			flavour := parsedProfile[0]
+			profileName = parsedProfile[1]
+			profile, err = ProfileManager.GetProfileByID(flavour, profileName)
+		} else {
+			profile, err = ProfileManager.GetProfileByID(BrowserName, ch.Profile)
+		}
+
 		if err != nil {
 			return err
 		}
-		bookmarkDir, err := prof.AbsolutePath()
+		bookmarkDir, err := profile.AbsolutePath()
 		if err != nil {
 			return err
 		}
