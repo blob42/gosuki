@@ -58,7 +58,7 @@ func NewQuteConfig() *QuteConfig {
 			BkDir:          baseDir + "/bookmarks",
 			BaseDir:        baseDir,
 			UseFileWatcher: true,
-			UseHooks:       []string{"bk_tags_from_name", "bk_marktab"},
+			UseHooks:       []string{"bk_tags_from_name"},
 		},
 		ProfilePrefs: modules.ProfilePrefs{
 			Profile: DefaultProfile,

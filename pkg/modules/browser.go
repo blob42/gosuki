@@ -137,6 +137,9 @@ func (b BrowserConfig) CallHooks(obj any) error {
 		}
 
 		for _, hook := range b.hooks {
+			if (hook.Kind() & hooks.BrowserHook) == 0 {
+				continue
+			}
 			if hook, ok := hook.(hooks.Hook[*tree.Node]); ok {
 				log.Tracef("<%s> calling hook <%s> on node <%s>", b.Name, hook.Name(), node.URL)
 				if err := hook.Func(node); err != nil {
@@ -148,6 +151,9 @@ func (b BrowserConfig) CallHooks(obj any) error {
 	case *gosuki.Bookmark:
 		bk := obj
 		for _, hook := range b.hooks {
+			if (hook.Kind() & hooks.BrowserHook) == 0 {
+				continue
+			}
 			if hook, ok := hook.(hooks.Hook[*gosuki.Bookmark]); ok {
 				log.Tracef("<hook:%s> calling  <%s> on <%s>", b.Name, hook.Name(), bk.URL)
 				if err := hook.Func(bk); err != nil {
@@ -163,7 +169,7 @@ func (b BrowserConfig) CallHooks(obj any) error {
 }
 
 // Registers hooks for this browser. Hooks are identified by their name.
-func (b *BrowserConfig) AddHooks(bHooks ...hooks.NamedHook) {
+func (b *BrowserConfig) addHooks(bHooks ...hooks.NamedHook) {
 	b.hooks = append(b.hooks, bHooks...)
 	hooks.SortByPriority(b.hooks)
 
@@ -260,7 +266,7 @@ func SetupBrowser(browser BrowserModule, c *Context, p *profiles.Profile) error 
 		if !ok {
 			return fmt.Errorf("hook <%s> not defined", hookName)
 		}
-		bConf.AddHooks(hook)
+		bConf.addHooks(hook)
 	}
 
 	// Init browsers' BufferDB

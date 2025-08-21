@@ -65,6 +65,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	sqlite3 "github.com/mattn/go-sqlite3"
 
+	"github.com/blob42/gosuki"
+	"github.com/blob42/gosuki/hooks"
 	"github.com/blob42/gosuki/pkg/config"
 )
 
@@ -288,6 +290,12 @@ func (src *DB) SyncToClock(dst *DB, remoteClock uint64) {
 
 			// insertion success on l2 cache, update clock
 		} else if err == nil && dst.Name == L2CacheName {
+			log.Trace("inserted", "url", scan.URL, "tags", scan.Tags)
+			hooksQueue <- hooks.HookJob{
+				Book: scan.AsBookmark(),
+				Kind: hooks.GlobalInsertHook,
+			}
+
 			_, err = dstTx.Exec("UPDATE gskbookmarks SET version = ? WHERE URL = ?",
 				Clock.Tick(remoteClock), scan.URL)
 			if err != nil {
@@ -360,8 +368,22 @@ func (src *DB) SyncToClock(dst *DB, remoteClock uint64) {
 
 		if err != nil {
 			log.Errorf("%s: %s", err, scan.URL)
+			// update success
+		} else {
+			log.Trace("updated", "url", scan.URL, "tags", newTagsStr)
+			hooksQueue <- hooks.HookJob{
+				Book: &gosuki.Bookmark{
+					URL:    scan.URL,
+					Title:  scan.Metadata,
+					Tags:   newTags.tags,
+					Desc:   scan.Desc,
+					Module: scan.Module,
+				},
+				Kind: hooks.GlobalUpdateHook,
+			}
 		}
-		log.Tracef("synced %s to %s", scan.URL, dst.Name)
+
+		log.Debugf("synced %s to %s", scan.URL, dst.Name)
 	}
 
 	err = dstTx.Commit()
@@ -376,7 +398,10 @@ func (src *DB) SyncToClock(dst *DB, remoteClock uint64) {
 	}
 }
 
-var syncQueue = make(chan any)
+var (
+	syncQueue  chan any
+	hooksQueue chan hooks.HookJob
+)
 
 // cacheSyncScheduler starts a scheduler that debounces cache sync operations to
 // disk. it uses a two-level caching strategy: first syncing the main cache to
@@ -388,6 +413,7 @@ func cacheSyncScheduler(input <-chan any) {
 	log.Debug("starting cache sync scheduler")
 
 	queue := make(chan any, 100)
+	defer close(queue)
 
 	// debounce interval
 	timer := time.NewTimer(0)
@@ -439,8 +465,11 @@ func ScheduleBackupToDisk() {
 	}()
 }
 
-func startSyncScheduler() {
+func startSchedulers() {
+	syncQueue = make(chan any)
+	hooksQueue = make(chan hooks.HookJob, 100)
 	go cacheSyncScheduler(syncQueue)
+	go hooks.HooksScheduler(hooksQueue)
 }
 
 // BackupToDisk copies the `src` database contents to a file on disk.
@@ -479,8 +508,7 @@ func (src *DB) BackupToDisk(dbpath string) error {
 		return err
 	}
 
-	err = bkDB.Ping()
-	if err != nil {
+	if err = bkDB.Ping(); err != nil {
 		return err
 	}
 
@@ -519,7 +547,9 @@ func (dst *DB) SyncFromDisk(dbpath string) error {
 	if err != nil {
 		return err
 	}
-	srcDB.Ping()
+	if err = srcDB.Ping(); err != nil {
+		return err
+	}
 
 	//log.Debugf("[flush] opening <%s>", DB_FILENAME)
 	bkDB, err := sqlx.Open(DriverBackupMode, dst.Path)
@@ -527,7 +557,10 @@ func (dst *DB) SyncFromDisk(dbpath string) error {
 	if err != nil {
 		return err
 	}
-	bkDB.Ping()
+
+	if err = bkDB.Ping(); err != nil {
+		return err
+	}
 
 	bk, err := _sql3BackupConns[1].Backup("main", _sql3BackupConns[0], "main")
 	if err != nil {
@@ -561,7 +594,9 @@ func (src *DB) CopyTo(dst *DB, dstName, srcName string) {
 		log.Error(err)
 	}
 
-	srcDB.Ping()
+	if err = srcDB.Ping(); err != nil {
+		log.Error(err)
+	}
 
 	dstDB, err := sqlx.Open(DriverBackupMode, dst.Path)
 	defer func() {
@@ -571,7 +606,9 @@ func (src *DB) CopyTo(dst *DB, dstName, srcName string) {
 	if err != nil {
 		log.Error(err)
 	}
-	dstDB.Ping()
+	if err = dstDB.Ping(); err != nil {
+		log.Error(err)
+	}
 
 	bk, err := _sql3BackupConns[1].Backup("main", _sql3BackupConns[0], "main")
 	if err != nil {

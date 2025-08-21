@@ -26,11 +26,22 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/blob42/gosuki"
 	"github.com/blob42/gosuki/pkg/marktab"
 	"github.com/blob42/gosuki/pkg/tree"
+)
+
+const (
+	ArchiveBoxTrigger = "@archivebox"
+)
+
+var (
+	BuiltinTriggers = []string{
+		ArchiveBoxTrigger,
+	}
 )
 
 // MarkTab represents a collection of rules defined in the marktab file as lines.
@@ -83,6 +94,21 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 		// Spawn a new shell subprocess with the rule's command, passing in
 		// the bookmark details.
 		if rule.Match(bk) {
+
+			// cleanout tags from builtin triggers
+			bk.Tags = slices.DeleteFunc(bk.Tags, func(in string) bool {
+				return slices.Contains(BuiltinTriggers, in)
+			})
+
+			log.Debug(
+				"running marktab",
+				"rule",
+				rule.Trigger,
+				"url",
+				bk.URL,
+				"tags",
+				strings.Join(bk.Tags, ","),
+			)
 			cmd := exec.Command("sh", "-c", rule.Command)
 			cmd.Env = append(
 				os.Environ(),
@@ -109,18 +135,20 @@ func BkMktabHook(b *gosuki.Bookmark) error {
 }
 
 func init() {
-	regHook(
+	registerHook(
 		Hook[*tree.Node]{
 			name:     "node_marktab",
 			Func:     NodeMktabHook,
-			priority: 10,
+			priority: 1,
+			kind:     GlobalInsertHook | GlobalUpdateHook,
 		},
 	)
-	regHook(
+	registerHook(
 		Hook[*gosuki.Bookmark]{
 			name:     "bk_marktab",
 			Func:     BkMktabHook,
-			priority: 10,
+			priority: 1,
+			kind:     GlobalInsertHook | GlobalUpdateHook,
 		},
 	)
 
