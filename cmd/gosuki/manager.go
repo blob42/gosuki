@@ -20,7 +20,7 @@
 //  along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//go:build (systray && darwin) || !systray
+//go:build (systray && darwin) || (systray && windows) || !systray
 
 package main
 

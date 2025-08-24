@@ -143,7 +143,7 @@ func (pm *MozProfileManager) ListFlavours() []BrowserDef {
 	// detect local flavours
 	for _, v := range browsers.Defined(browsers.Mozilla) {
 		if v.Detect() {
-			result = append(result, v)
+			result = append(result, *v)
 		}
 	}
 
