@@ -163,7 +163,7 @@ func getDefaultChromeDir() string {
 func getDefaultFirefoxDir() string {
 	switch runtime.GOOS {
 	case "windows":
-		return filepath.Join(os.Getenv("APPDATA"), "Mozilla", "Firefox", "Profiles")
+		return filepath.Join(os.Getenv("APPDATA"), "Mozilla", "Firefox")
 	case "darwin":
 		return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "Firefox", "Profiles")
 	default: // linux
