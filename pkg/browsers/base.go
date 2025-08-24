@@ -1,28 +1,11 @@
-//
-//  Copyright (c) 2025 Chakib Ben Ziane <contact@blob42.xyz>  and [`gosuki` contributors](https://github.com/blob42/gosuki/graphs/contributors).
-//  All rights reserved.
-//
-//  SPDX-License-Identifier: AGPL-3.0-or-later
-//
-//  This file is part of GoSuki.
-//
-//  GoSuki is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Affero General Public License as
-//  published by the Free Software Foundation, either version 3 of the
-//  License, or (at your option) any later version.
-//
-//  GoSuki is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Affero General Public License for more details.
-//
-//  You should have received a copy of the GNU Affero General Public License
-//  along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
-//
-
 package browsers
 
-import "github.com/blob42/gosuki/internal/utils"
+import (
+	"log" // Ajoutez cet import manquant
+	"os"
+	"path/filepath"
+	"runtime"
+)
 
 type BrowserFamily uint
 
@@ -33,62 +16,179 @@ const (
 )
 
 type BrowserDef struct {
-	Flavour string // also acts as canonical name
-
-	Family BrowserFamily // browser family
-
+	Flavour string        // also acts as canonical name
+	Family  BrowserFamily // browser family
 	// Base browser directory path
 	baseDir string
-
 	// (linux only) path to snap package base dir
 	snapDir string
-
 	// (linux only) path to flatpak package base dir
 	flatDir string
 }
 
-func (b BrowserDef) Detect() bool {
-	var dir string
-	var err error
-	if dir, err = b.ExpandBaseDir(); err != nil {
-		log.Debugf("expand path: %s: %s", b.BaseDir(), err)
-		log.Info("skipping", "flavour", b.Flavour)
-	} else if ok, err := utils.DirExists(dir); err != nil || !ok {
-		log.Infof("could not detect <%s>: %s: %s", b.Flavour, dir, err)
+// Ajoutez ces méthodes manquantes pour BrowserDef
+
+// Detect vérifie si le navigateur est installé/détectable
+func (b *BrowserDef) Detect() bool {
+	// Vérifier si le répertoire de base existe
+	baseDir, err := b.ExpandBaseDir()
+	if err != nil || baseDir == "" {
 		return false
 	}
-
+	
+	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+		return false
+	}
+	
 	return true
 }
 
-func MozBrowser(flavour, base, snap, flat string) BrowserDef {
-	return BrowserDef{
-		Flavour: flavour,
-		baseDir: base,
-		Family:  Mozilla,
-		snapDir: snap,
-		flatDir: flat,
+// ExpandBaseDir retourne le chemin de base étendu (résolution des variables d'environnement)
+func (b *BrowserDef) ExpandBaseDir() (string, error) {
+	if b.baseDir == "" {
+		return "", nil
 	}
+	
+	// Expansion des variables d'environnement
+	expanded := os.ExpandEnv(b.baseDir)
+	
+	// Conversion en chemin absolu
+	absPath, err := filepath.Abs(expanded)
+	if err != nil {
+		log.Printf("Error expanding base directory %s: %v", b.baseDir, err)
+		return expanded, err
+	}
+	
+	return absPath, nil
 }
 
-func ChromeBrowser(flavour, base, snap, flat string) BrowserDef {
-	return BrowserDef{
-		Flavour: flavour,
-		baseDir: base,
-		Family:  ChromeBased,
-		snapDir: snap,
-		flatDir: flat,
-	}
+// BaseDir retourne le répertoire de base
+func (b *BrowserDef) BaseDir() string {
+	return b.baseDir
 }
 
-// Returns defined browsers of type `Mozilla`
-func Defined(family BrowserFamily) map[string]BrowserDef {
-	result := map[string]BrowserDef{}
-	for _, bd := range DefinedBrowsers {
-		if bd.Family == family {
-			result[bd.Flavour] = bd
+// SetBaseDir définit le répertoire de base
+func (b *BrowserDef) SetBaseDir(dir string) {
+	b.baseDir = dir
+}
+
+// GetBaseDir est un alias pour BaseDir() pour compatibilité
+func (b *BrowserDef) GetBaseDir() string {
+	return b.baseDir
+}
+
+// Ajoutez la variable DefinedBrowsers qui manque
+var DefinedBrowsers map[string]*BrowserDef
+
+// Fonction Defined pour compatibilité avec le code existant
+func Defined(family ...BrowserFamily) map[string]*BrowserDef {
+	if len(family) == 0 {
+		return DefinedBrowsers
+	}
+	
+	// Filtrer par famille de navigateur
+	filtered := make(map[string]*BrowserDef)
+	targetFamily := family[0]
+	
+	for name, browser := range DefinedBrowsers {
+		if browser.Family == targetFamily {
+			filtered[name] = browser
 		}
 	}
+	
+	return filtered
+}
 
-	return result
+// Définition pour Qutebrowser (avec majuscule pour compatibilité)
+var QuteBrowser *BrowserDef
+
+// Initialisez DefinedBrowsers
+func init() {
+	if DefinedBrowsers == nil {
+		DefinedBrowsers = make(map[string]*BrowserDef)
+	}
+	
+	// Ajoutez ici vos définitions de navigateurs par défaut
+	// Exemple pour Windows :
+	initializeDefaultBrowsers()
+}
+
+// Fonction pour initialiser les navigateurs par défaut
+func initializeDefaultBrowsers() {
+	// Chrome
+	DefinedBrowsers["chrome"] = &BrowserDef{
+		Flavour: "chrome",
+		Family:  ChromeBased,
+		baseDir: getDefaultChromeDir(),
+	}
+	
+	// Firefox
+	DefinedBrowsers["firefox"] = &BrowserDef{
+		Flavour: "firefox", 
+		Family:  Mozilla,
+		baseDir: getDefaultFirefoxDir(),
+	}
+	
+	// Edge
+	DefinedBrowsers["edge"] = &BrowserDef{
+		Flavour: "edge",
+		Family:  ChromeBased,
+		baseDir: getDefaultEdgeDir(),
+	}
+	
+	// Qutebrowser
+	quteDef := &BrowserDef{
+		Flavour: "qutebrowser",
+		Family:  Qutebrowser,
+		baseDir: getDefaultQuteDir(),
+	}
+	DefinedBrowsers["qutebrowser"] = quteDef
+	
+	// Alias pour compatibilité
+	QuteBrowser = quteDef
+}
+
+// Fonctions helper pour obtenir les chemins par défaut selon l'OS
+func getDefaultChromeDir() string {
+	switch runtime.GOOS {
+	case "windows":
+		return filepath.Join(os.Getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
+	case "darwin":
+		return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "Google", "Chrome")
+	default: // linux
+		return filepath.Join(os.Getenv("HOME"), ".config", "google-chrome")
+	}
+}
+
+func getDefaultFirefoxDir() string {
+	switch runtime.GOOS {
+	case "windows":
+		return filepath.Join(os.Getenv("APPDATA"), "Mozilla", "Firefox")
+	case "darwin":
+		return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "Firefox", "Profiles")
+	default: // linux
+		return filepath.Join(os.Getenv("HOME"), ".mozilla", "firefox")
+	}
+}
+
+func getDefaultEdgeDir() string {
+	switch runtime.GOOS {
+	case "windows":
+		return filepath.Join(os.Getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
+	case "darwin":
+		return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "Microsoft Edge")
+	default: // linux
+		return filepath.Join(os.Getenv("HOME"), ".config", "microsoft-edge")
+	}
+}
+
+func getDefaultQuteDir() string {
+	switch runtime.GOOS {
+	case "windows":
+		return filepath.Join(os.Getenv("APPDATA"), "qutebrowser")
+	case "darwin":
+		return filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "qutebrowser")
+	default: // linux
+		return filepath.Join(os.Getenv("HOME"), ".config", "qutebrowser")
+	}
 }
