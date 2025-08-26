@@ -89,6 +89,12 @@ func runBrowserModule(m *manager.Manager,
 			log.Error(err)
 			return err
 		}
+
+		if _, err := pfl.AbsolutePath(); err != nil {
+			log.Warnf("profile path is invalid: %s", err)
+			return &modules.ErrModDisabled{Err: err}
+		}
+
 		if err := bpm.UseProfile(pfl, flav); err != nil {
 			log.Warnf("unable to load profile <%s.%s>: %s", mod.ID, pfl.Name, err)
 			return &modules.ErrModDisabled{Err: err}

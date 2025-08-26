@@ -82,6 +82,18 @@ func CopyFilesToTmpFolder(srcglob string, dst string) error {
 
 }
 
+func CopyFileToTmp(source, tmpDir, filename string) error {
+	srcFile := filepath.Clean(source)
+	dstFile := filepath.Join(tmpDir, filename)
+
+	input, err := os.ReadFile(srcFile)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(dstFile, input, 0644)
+}
+
 // TEST:
 func CleanFiles() {
 	log.Debugf("cleaning files <%s>", TMPDIR)
