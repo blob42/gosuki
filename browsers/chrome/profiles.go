@@ -93,7 +93,7 @@ func (*Chrome) ListFlavours() []browsers.BrowserDef {
 	// detect local flavours
 	for _, v := range browsers.Defined(browsers.ChromeBased) {
 		if v.Detect() {
-			result = append(result, v)
+			result = append(result, *v)
 		}
 	}
 

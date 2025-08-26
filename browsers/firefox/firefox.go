@@ -23,7 +23,6 @@ package firefox
 
 import (
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -677,22 +676,22 @@ func (f *Firefox) addFolderNode(folder MozFolder) (bool, *tree.Node) {
 
 // Copies places.sqlite to a tmp dir to read a VFS lock sqlite db
 func (f *Firefox) initPlacesCopy() (mozilla.PlaceCopyJob, error) {
-	// create a new copy job
 	pc := mozilla.NewPlaceCopyJob()
 
-	err := utils.CopyFilesToTmpFolder(path.Join(f.BkDir, f.BkFile+"*"), pc.Path())
+	// Construire le chemin source correctement
+	sourcePath := filepath.Join(f.BkDir, f.BkFile)
+
+	// Copier seulement le fichier principal
+	err := utils.CopyFileToTmp(sourcePath, pc.Path(), f.BkFile)
 	if err != nil {
-		return pc, fmt.Errorf("could not copy places.sqlite to tmp folder: %w", err)
+		return pc, fmt.Errorf("could not copy places.sqlite: %w", err)
 	}
 
+	// Construire le chemin destination correctement
+	destPath := filepath.Join(pc.Path(), f.BkFile)
+
 	opts := FFConfig.PlacesDSN
-
-	f.places, err = database.NewDB("places",
-		// using the copied places file instead of the original to avoid
-		// sqlite vfs lock errors
-		path.Join(pc.Path(), f.BkFile),
-		database.DBTypeFileDSN, opts).Init()
-
+	f.places, err = database.NewDB("places", destPath, database.DBTypeFileDSN, opts).Init()
 	if err != nil {
 		return pc, err
 	}

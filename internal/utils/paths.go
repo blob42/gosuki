@@ -118,10 +118,17 @@ func ExpandPath(paths ...string) (string, error) {
 	if len(paths) == 0 {
 		return "", fmt.Errorf("no path provided")
 	}
+
+	path := os.ExpandEnv(filepath.Join(paths...))
+
+	// Vérifier si le chemin est vide après expansion
+	if path == "" {
+		return "", fmt.Errorf("expanded path is empty")
+	}
+
 	if homedir, err = os.UserHomeDir(); err != nil {
 		return "", err
 	}
-	path := os.ExpandEnv(filepath.Join(paths...))
 
 	if path[0] == '~' {
 		path = filepath.Join(homedir, path[1:])

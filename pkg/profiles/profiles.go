@@ -23,6 +23,7 @@
 package profiles
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/blob42/gosuki/internal/utils"
@@ -129,8 +130,21 @@ func GetFlavour(pm ProfileManager, baseDir string) string {
 }
 
 func (p Profile) AbsolutePath() (string, error) {
-	if !p.IsRelative {
-		return utils.ExpandPath(p.Path)
+	log.Debugf("Profile debug: Name=%s, IsRelative=%t, Path=%s, BaseDir=%s",
+		p.Name, p.IsRelative, p.Path, p.BaseDir)
+
+	if p.IsRelative {
+		if p.BaseDir == "" {
+			return "", fmt.Errorf("profile baseDir is empty for relative profile %s", p.Name)
+		}
+		if p.Path == "" {
+			return "", fmt.Errorf("profile path is empty for relative profile %s", p.Name)
+		}
+		return utils.ExpandPath(p.BaseDir, p.Path)
 	}
-	return utils.ExpandPath(p.BaseDir, p.Path)
+
+	if p.Path == "" {
+		return "", fmt.Errorf("profile path is empty for absolute profile %s", p.Name)
+	}
+	return utils.ExpandPath(p.Path)
 }
