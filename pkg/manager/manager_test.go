@@ -1,7 +1,6 @@
 package manager
 
 import (
-	llog "log"
 	"os"
 	"syscall"
 	"testing"
@@ -21,7 +20,7 @@ func (w *Worker) Run(um UnitManager) {
 		select {
 
 		case <-ticker.C:
-			llog.Print("tick")
+			// llog.Print("tick")
 
 		// Read from channel if this worker unit should stop
 		case <-um.ShouldStop():
