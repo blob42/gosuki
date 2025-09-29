@@ -53,9 +53,10 @@ func TestImportBasicParsing(t *testing.T) {
 	}
 
 	want := &gosuki.Bookmark{
-		URL:   "https://example.com",
-		Title: "Example Website",
-		Tags:  []string{},
+		URL:    "https://example.com",
+		Title:  "Example Website",
+		Tags:   []string{},
+		Module: ImporterID,
 	}
 	if diff := cmp.Diff(want, bookmarks[0]); diff != "" {
 		t.Errorf("Bookmark mismatch (-want +got):\n%s", diff)

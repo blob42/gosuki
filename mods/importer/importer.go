@@ -31,14 +31,16 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/fsnotify/fsnotify"
+
 	"github.com/blob42/gosuki"
 	"github.com/blob42/gosuki/internal/utils"
 	"github.com/blob42/gosuki/pkg/config"
 	"github.com/blob42/gosuki/pkg/events"
 	"github.com/blob42/gosuki/pkg/logging"
 	"github.com/blob42/gosuki/pkg/modules"
+	"github.com/blob42/gosuki/pkg/parsing"
 	"github.com/blob42/gosuki/pkg/watch"
-	"github.com/fsnotify/fsnotify"
 )
 
 const (
@@ -162,6 +164,12 @@ func (im *BookmarksImporter) Load() ([]*gosuki.Bookmark, error) {
 		}
 		result = append(result, bookmarks...)
 	}
+
+	for _, bk := range result {
+		if err = parsing.ParseBkTags(bk); err != nil {
+			return nil, fmt.Errorf("failed to parse tags: %w", err)
+		}
+	}
 	return result, nil
 }
 
@@ -224,9 +232,10 @@ func loadBookmarksFromHTML(filePath string) ([]*gosuki.Bookmark, error) {
 		}
 
 		bookmark := &gosuki.Bookmark{
-			URL:   url,
-			Title: title,
-			Tags:  tags,
+			URL:    url,
+			Title:  title,
+			Tags:   tags,
+			Module: ImporterID,
 		}
 		// fmt.Printf("%#v\n", bookmark.URL)
 
