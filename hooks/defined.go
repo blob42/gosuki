@@ -38,14 +38,16 @@ type NamedHook interface {
 
 var Defined = HookMap{
 	"node_tags_from_name": Hook[*tree.Node]{
-		name: "node_tags_from_name",
-		Func: parsing.ParseNodeTags,
-		kind: BrowserHook,
+		name:     "node_tags_from_name",
+		Func:     parsing.ParseNodeTags,
+		priority: 2,
+		kind:     BrowserHook,
 	},
 	"bk_tags_from_name": Hook[*gosuki.Bookmark]{
-		name: "bk_tags_from_name",
-		Func: parsing.ParseBkTags,
-		kind: BrowserHook,
+		name:     "bk_tags_from_name",
+		Func:     parsing.ParseBkTags,
+		priority: 2,
+		kind:     BrowserHook,
 	},
 }
 
