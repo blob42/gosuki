@@ -25,7 +25,6 @@
 //
 // They can effectively be used as a command line interface to the host system
 // through the browser builtin Ctrl+D bookmark feature.
-//
 package hooks
 
 import (
@@ -173,7 +172,8 @@ func HooksScheduler(incoming <-chan HookJob) {
 			if !ok {
 				return
 			}
-			go processHook(book)
+			// Execute hooks sequentially to prevent race conditions in user scripts
+			processHook(book)
 		case err := <-hookErrors:
 			log.Error(err)
 

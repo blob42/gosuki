@@ -28,6 +28,7 @@ import (
 	"os/exec"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/blob42/gosuki"
 	"github.com/blob42/gosuki/pkg/marktab"
@@ -118,7 +119,11 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 				"GOSUKI_MODULE="+bk.Module,
 			)
 			if err := cmd.Start(); err != nil {
-				return fmt.Errorf("failed to start command: %w", err)
+				return fmt.Errorf("failed to start cmd: %w", err)
+			}
+			cmd.WaitDelay = time.Second * 60
+			if err := cmd.Wait(); err != nil {
+				return fmt.Errorf("failed to wait cmd: %w", err)
 			}
 		}
 	}
