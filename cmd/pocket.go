@@ -107,21 +107,19 @@ func importFromPocketCSV(ctx context.Context, c *cli.Command) error {
 			continue
 		}
 
-		if len(row) < 6 {
+		if len(row) < 5 {
 			continue
 		}
 
+		title := row[0]
 		url := row[1]
-		title := row[2]
 		// timeAdded := row[3]
-		tags := row[4]
-		desc := row[5]
+		tags := row[3]
 
 		bookmark := &gosuki.Bookmark{
 			URL:    url,
 			Title:  title,
 			Tags:   strings.Split(tags, ","),
-			Desc:   desc,
 			Module: PocketImporterID,
 		}
 
