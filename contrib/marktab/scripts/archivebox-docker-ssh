@@ -10,6 +10,7 @@
 #   GOSUKI_TAGS - Tags to apply to the archived URL (inherited from environment)
 #   GOSUKI_URL  - The URL to be archived (inherited from environment)
 #   HOST - The remote host to connect to via SSH
+#   USE_LOCAL_DOCKER - Connect to local docker instance (without ssh)
 #
 # Configuration:
 #   COMPOSE_WORKDIR - Docker Compose project directory on the remote host
@@ -24,7 +25,7 @@ set -euo pipefail
 : "${GOSUKI_URL?GOSUKI_URL must be set}"
 : "${GOSUKI_TAGS?GOSUKI_TAGS must be set}"
 
-
+USE_LOCAL_DOCKER=false
 
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share/gosuki}
 
@@ -49,7 +50,14 @@ DOCKER_ARGS=(
 echo "ID=$GOSUKI_RUN_ID" Archiving $GOSUKI_URL >> "$LOG_FILE"
 
 
-if ! $SSH_CMD "cd $COMPOSE_WORKDIR && docker compose ${DOCKER_ARGS[*]}" 2>> "$LOG_FILE"; then
-  echo "Error: Failed to archive URL" >&2
-  exit 1
+if [ "$USE_LOCAL_DOCKER" = true ]; then
+  if ! docker compose "${DOCKER_ARGS[*]}" 2>> "$LOG_FILE"; then
+    echo "Error: Failed to archive URL" >&2
+    exit 1
+  fi
+else
+  if ! $SSH_CMD "cd $COMPOSE_WORKDIR && docker compose ${DOCKER_ARGS[*]}" 2>> "$LOG_FILE"; then
+    echo "Error: Failed to archive URL" >&2
+    exit 1
+  fi
 fi
