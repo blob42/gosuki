@@ -26,11 +26,24 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/blob42/gosuki"
+	"github.com/blob42/gosuki/internal/utils"
 	"github.com/blob42/gosuki/pkg/marktab"
 	"github.com/blob42/gosuki/pkg/tree"
+)
+
+const (
+	ArchiveBoxTrigger = "@archivebox"
+)
+
+var (
+	BuiltinTriggers = []string{
+		ArchiveBoxTrigger,
+	}
 )
 
 // MarkTab represents a collection of rules defined in the marktab file as lines.
@@ -83,6 +96,25 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 		// Spawn a new shell subprocess with the rule's command, passing in
 		// the bookmark details.
 		if rule.Match(bk) {
+
+			runID := utils.GenStringID(4)
+
+			// cleanout tags from builtin triggers
+			bk.Tags = slices.DeleteFunc(bk.Tags, func(in string) bool {
+				return slices.Contains(BuiltinTriggers, in)
+			})
+
+			log.Debug(
+				"run marktab",
+				"id",
+				runID,
+				"rule",
+				rule.Trigger,
+				"url",
+				bk.URL,
+				"tags",
+				strings.Join(bk.Tags, ","),
+			)
 			cmd := exec.Command("sh", "-c", rule.Command)
 			cmd.Env = append(
 				os.Environ(),
@@ -90,9 +122,14 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 				"GOSUKI_TITLE="+bk.Title,
 				"GOSUKI_TAGS="+strings.Join(bk.Tags, ","),
 				"GOSUKI_MODULE="+bk.Module,
+				"GOSUKI_RUN_ID="+runID,
 			)
 			if err := cmd.Start(); err != nil {
-				return fmt.Errorf("failed to start command: %w", err)
+				return fmt.Errorf("failed to start cmd: %w", err)
+			}
+			cmd.WaitDelay = time.Second * 60
+			if err := cmd.Wait(); err != nil {
+				return fmt.Errorf("failed to wait cmd: %w", err)
 			}
 		}
 	}
@@ -109,18 +146,20 @@ func BkMktabHook(b *gosuki.Bookmark) error {
 }
 
 func init() {
-	regHook(
+	registerHook(
 		Hook[*tree.Node]{
 			name:     "node_marktab",
 			Func:     NodeMktabHook,
-			priority: 10,
+			priority: 1,
+			kind:     GlobalInsertHook | GlobalUpdateHook,
 		},
 	)
-	regHook(
+	registerHook(
 		Hook[*gosuki.Bookmark]{
 			name:     "bk_marktab",
 			Func:     BkMktabHook,
-			priority: 10,
+			priority: 1,
+			kind:     GlobalInsertHook | GlobalUpdateHook,
 		},
 	)
 

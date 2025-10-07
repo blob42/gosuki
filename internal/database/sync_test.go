@@ -93,6 +93,8 @@ func TestSyncToCache(t *testing.T) {
 	var count int
 	var version uint64
 
+	go startSchedulers()
+
 	Clock = &LamportClock{}
 	require.Equal(t, uint64(0), Clock.Value)
 	buffer := getBuffer(t)

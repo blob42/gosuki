@@ -51,7 +51,7 @@ func LoadBookmarks(load loadFunc, modName string) error {
 	}
 
 	for _, mark := range marks {
-		log.Trace("fetched", "bookmark", mark.URL)
+		log.Trace("upserting", "bookmark", mark.URL)
 		err = buffer.UpsertBookmark(mark)
 		if err != nil {
 			log.Errorf("db upsert: %s", mark.URL)

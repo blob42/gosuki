@@ -33,20 +33,25 @@ type HookMap map[string]NamedHook
 
 type NamedHook interface {
 	Name() string
+	Kind() Kind
 }
 
 var Defined = HookMap{
 	"node_tags_from_name": Hook[*tree.Node]{
-		name: "node_tags_from_name",
-		Func: parsing.ParseNodeTags,
+		name:     "node_tags_from_name",
+		Func:     parsing.ParseNodeTags,
+		priority: 2,
+		kind:     BrowserHook,
 	},
 	"bk_tags_from_name": Hook[*gosuki.Bookmark]{
-		name: "bk_tags_from_name",
-		Func: parsing.ParseBkTags,
+		name:     "bk_tags_from_name",
+		Func:     parsing.ParseBkTags,
+		priority: 2,
+		kind:     BrowserHook,
 	},
 }
 
-func regHook[T Hookable](hooks ...Hook[T]) {
+func registerHook[T Hookable](hooks ...Hook[T]) {
 	for _, hook := range hooks {
 		Defined[hook.name] = hook
 	}

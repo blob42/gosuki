@@ -32,7 +32,7 @@ import (
 
 const (
 	WhereQueryBookmarks = `
-	URL like '%%%s%%' OR metadata like '%%%s%%' OR tags like '%%%s%%'
+	URL like '%%%s%%' OR metadata like '%%%s%%' OR LOWER(tags) like '%%%s%%'
 	`
 
 	WhereQueryBookmarksFuzzy = `
@@ -40,10 +40,10 @@ const (
 	`
 
 	WhereQueryBookmarksByTag = `
-		(URL LIKE '%%%s%%' OR metadata LIKE '%%%s%%') AND tags LIKE '%%%s%%'
+		(URL LIKE '%%%s%%' OR metadata LIKE '%%%s%%') AND LOWER(tags) LIKE '%%%s%%'
 	`
 	WhereQueryBookmarksByTagFuzzy = `
-		(fuzzy('%s', URL) OR fuzzy('%s', metadata)) AND tags LIKE '%%%s%%'
+		(fuzzy('%s', URL) OR fuzzy('%s', metadata)) AND LOWER(tags) LIKE '%%%s%%'
 	`
 
 	QQueryPaginate = ` LIMIT %d OFFSET %d`
@@ -61,23 +61,6 @@ type QueryResult struct {
 
 func DefaultPagination() *PaginationParams {
 	return &PaginationParams{1, 50}
-}
-
-func (raws RawBookmarks) AsBookmarks() []*gosuki.Bookmark {
-	res := []*Bookmark{}
-	for _, raw := range raws {
-		tags := tagsFromString(raw.Tags, TagSep)
-		res = append(res, &Bookmark{
-			URL:      raw.URL,
-			Title:    raw.Metadata,
-			Tags:     tags.Get(),
-			Desc:     raw.Desc,
-			Module:   raw.Module,
-			Modified: raw.Modified,
-		})
-	}
-
-	return res
 }
 
 func QueryBookmarksByTag(
@@ -109,6 +92,53 @@ func QueryBookmarksByTag(
 	var total uint
 	err = DiskDB.Handle.GetContext(ctx, &total,
 		fmt.Sprintf(buildCountQuery(tag, fuzzy), query, query, query))
+	if err != nil {
+		return nil, err
+	}
+
+	return &QueryResult{rawBooks.AsBookmarks(), total}, nil
+}
+
+func QueryBookmarksByTags(
+	ctx context.Context,
+	query string,
+	tags []string,
+	cond TagCond,
+	fuzzy bool,
+	pagination *PaginationParams,
+) (*QueryResult, error) {
+	if len(tags) == 0 {
+		return nil, errors.New("empty tags provided")
+	}
+
+	if pagination == nil {
+		return nil, errors.New("nil: *PaginationParams")
+	}
+
+	// build the WHERE clause
+	whereClause := buildWhereClauseForManyTags(query, tags, cond, fuzzy)
+	log.Trace(whereClause)
+
+	sqlQuery := fmt.Sprintf(
+		"SELECT URL, metadata, tags, module FROM gskbookmarks WHERE %s "+QQueryPaginate,
+		whereClause,
+		pagination.Size,
+		(pagination.Page-1)*pagination.Size,
+	)
+
+	rawBooks := RawBookmarks{}
+	err := DiskDB.Handle.SelectContext(ctx, &rawBooks, sqlQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	countQuery := fmt.Sprintf(
+		"SELECT COUNT(*) FROM gskbookmarks WHERE %s LIMIT 1",
+		whereClause,
+	)
+
+	var total uint
+	err = DiskDB.Handle.GetContext(ctx, &total, countQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +183,7 @@ func BookmarksByTag(
 	query := "SELECT * FROM gskbookmarks WHERE"
 	tagsCondition := ""
 	if len(tag) > 0 {
-		tagsCondition = fmt.Sprintf(" tags LIKE '%%%s%%'", tag)
+		tagsCondition = fmt.Sprintf(" LOWER(tags) LIKE '%%%s%%'", strings.ToLower(tag))
 	} else {
 		return nil, errors.New("empty tag provided")
 	}
@@ -173,6 +203,66 @@ func BookmarksByTag(
 		&count,
 		fmt.Sprintf("SELECT COUNT(*) FROM gskbookmarks WHERE %s", tagsCondition),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &QueryResult{rawBooks.AsBookmarks(), count}, nil
+}
+
+type TagCond int
+
+const (
+	TagAnd = iota
+	TagOr
+)
+
+func BookmarksByTags(
+	ctx context.Context,
+	tags []string,
+	cond TagCond,
+	pagination *PaginationParams,
+) (*QueryResult, error) {
+	if len(tags) == 0 {
+		return nil, errors.New("empty tags provided")
+	}
+
+	query := "SELECT * FROM gskbookmarks WHERE"
+	conditions := make([]string, 0, len(tags))
+
+	for _, tag := range tags {
+		if len(tag) > 0 {
+			conditions = append(
+				conditions,
+				fmt.Sprintf("LOWER(tags) LIKE '%%%s%%'", strings.ToLower(tag)),
+			)
+		}
+	}
+
+	if len(conditions) == 0 {
+		return nil, errors.New("no valid tags provided")
+	}
+
+	var joinOperator string
+	if cond == TagAnd {
+		joinOperator = " AND "
+	} else {
+		joinOperator = " OR "
+	}
+
+	query = query + " (" + strings.Join(conditions, joinOperator) + ")"
+	query += fmt.Sprintf(" "+QQueryPaginate, pagination.Size, (pagination.Page-1)*pagination.Size)
+
+	rawBooks := RawBookmarks{}
+	err := DiskDB.Handle.SelectContext(ctx, &rawBooks, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var count uint
+	countQuery := "SELECT COUNT(*) FROM gskbookmarks WHERE"
+	countQuery = countQuery + " (" + strings.Join(conditions, joinOperator) + ")"
+	err = DiskDB.Handle.GetContext(ctx, &count, countQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -285,4 +375,77 @@ func buildCountQuery(tag string, fuzzy bool) string {
 		buildWhereClause(tag, fuzzy),
 	)
 	return query
+}
+
+func buildWhereClauseForManyTags(
+	query string,
+	tags []string,
+	cond TagCond,
+	fuzzy bool,
+) string {
+	conditions := make([]string, 0)
+	tagsConditions := make([]string, 0)
+
+	// query conditions
+	if query != "" {
+		trimmedQuery := strings.TrimSpace(query)
+		if fuzzy {
+			conditions = append(
+				conditions,
+				fmt.Sprintf(
+					"fuzzy('%s', URL) OR fuzzy('%s', metadata)",
+					trimmedQuery,
+					trimmedQuery,
+				),
+			)
+		} else {
+			conditions = append(
+				conditions,
+				fmt.Sprintf(
+					"URL like '%%%s%%' OR metadata like '%%%s%%'",
+					trimmedQuery,
+					trimmedQuery,
+				),
+			)
+		}
+	}
+
+	// tag conditions
+	for _, tag := range tags {
+		if tag != "" {
+			trimmedTag := strings.TrimSpace(tag)
+			if fuzzy {
+				tagsConditions = append(
+					tagsConditions,
+					fmt.Sprintf("fuzzy('%s', tags)", trimmedTag),
+				)
+			} else {
+				tagsConditions = append(
+					tagsConditions,
+					fmt.Sprintf(
+						"LOWER(tags) like '%%%s%%'",
+						strings.ToLower(trimmedTag),
+					),
+				)
+			}
+		}
+	}
+
+	tagJoinOperator := " OR "
+	if cond == TagAnd {
+		tagJoinOperator = " AND "
+	}
+
+	conditionsStr := "1=1"
+	if len(conditions) > 0 {
+		conditionsStr = strings.Join(conditions, " AND ")
+	}
+
+	tagsStr := "1=1"
+	if len(tagsConditions) > 0 {
+		tagsStr = strings.Join(tagsConditions, tagJoinOperator)
+	}
+
+	// we use AND because Query is always searched and tags are for filtering
+	return fmt.Sprintf("( %s ) AND ( %s )", conditionsStr, tagsStr)
 }

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- ArchiveBox integration using @archivebox tag or folder 
+- internal: call bookmark hooks from anywhere using bit flags
+- new export formats: pocket-html, json(pinboard/wallabag), generic XML-RSS
+- `suki search` command
+- `sudki fuzzy|search [term...] :tag1,tag2` to filter by tags with logical AND
+- `sudki fuzzy|search [term ...] :OR tag1,tag2` to filter by tags with logical OR
+- updated queries and api to filter by query and many tags
+
+### Fixed
+
+- html-autoimport: parse hash tags from title 
+
 ## [1.2.1] 2025-08-09
 
 ### Added 

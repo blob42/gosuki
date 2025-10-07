@@ -31,6 +31,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/blob42/gosuki"
+	"github.com/blob42/gosuki/internal/api"
 	db "github.com/blob42/gosuki/internal/database"
 )
 
@@ -39,10 +40,11 @@ type searchOpts struct {
 }
 
 var FuzzySearchCmd = &cli.Command{
-	Name:        "fuzzy",
-	Aliases:     []string{"f"},
-	Usage:       "fuzzy search anywhere",
-	UsageText:   "Uses fuzzy search algorithm on any of the `URL`, `Title` and `Metadata`",
+	Name:    "fuzzy",
+	Aliases: []string{"f"},
+	Usage:   "fuzzy search anywhere",
+	UsageText: "Uses fuzzy search algorithm on any of the `URL`, `Title` and `Metadata`." +
+		"Supports :tag syntax like search command for tag filtering.",
 	Description: "",
 	ArgsUsage:   "",
 	Category:    "",
@@ -51,6 +53,17 @@ var FuzzySearchCmd = &cli.Command{
 			return errors.New("missing search term")
 		}
 		return searchBookmarks(ctx, cmd, searchOpts{true}, cmd.Args().Slice()...)
+	},
+}
+
+var TagSearchCmd = &cli.Command{
+	Name:    "search",
+	Aliases: []string{"s"},
+	Usage:   "search bookmarks by tags with AND/OR operators",
+	UsageText: "suki search \"term :linux,kernel\" - searches for text + both tags\n" +
+		"suki search \":OR linux kernel\" - searches for either tag (case-insensitive)",
+	Action: func(ctx context.Context, cmd *cli.Command) error {
+		return searchBookmarks(ctx, cmd, searchOpts{false}, cmd.Args().Slice()...)
 	},
 }
 
@@ -117,13 +130,42 @@ func listBookmarks(ctx context.Context, cmd *cli.Command) error {
 }
 
 func searchBookmarks(ctx context.Context, cmd *cli.Command, opts searchOpts, keyword ...string) error {
+	if len(keyword) == 0 {
+		return fmt.Errorf("no search keywords provided")
+	}
+
+	fullQuery := strings.Join(keyword, " ")
+	query := api.ParseSearchQuery(fullQuery)
+
+	var result *db.QueryResult
+	var err error
+
 	pageParms := db.PaginationParams{
 		Page: 1,
 		Size: -1,
 	}
-	result, err := db.QueryBookmarks(ctx, keyword[0], opts.fuzzy, &pageParms)
+
+	if len(query.Tags) > 0 {
+		result, err = db.QueryBookmarksByTags(
+			ctx,
+			query.TextQuery,
+			query.Tags,
+			query.TagCond,
+			opts.fuzzy,
+			&pageParms,
+		)
+	} else {
+		result, err = db.QueryBookmarks(
+			ctx,
+			query.TextQuery,
+			opts.fuzzy,
+			&pageParms,
+		)
+	}
+
 	if err != nil {
 		return err
 	}
+
 	return formatPrint(ctx, cmd, result.Bookmarks)
 }

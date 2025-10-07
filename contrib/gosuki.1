@@ -12,8 +12,8 @@ Gosuki is a modular standalone and extension-free bookmark management system
 that centralizes and synchronizes bookmarks across multiple browsers and
 devices. It operates as a lightweight background service (daemon) that
 monitors native browser bookmark files (e.g., Firefox's \f(CWplaces.sqlite\fR,
-Chrome's Bookmarks json files) using OS-level file system watchers, eliminating the need
-for browser extensions.
+Chrome's Bookmarks json files) using OS-level file system watchers,
+eliminating the need for browser extensions.
 .PP
 Gosuki features real-time monitoring of bookmark changes via inotify/kqueue,
 ensuring zero latency in updates. It supports a tagging system that
@@ -26,7 +26,7 @@ any browser or API that emits bookmark-like data. Currently it supports
 browsers in the Firefox or Chrome family and has custom support for
 Qutebrowser.
 .PP
-Bookmarks are stored in a SQLite database at
+Bookmarks are stored in a sqlite3(1) database at
 \fI$XDG_DATA_DIR/gosuki/gosuki.db\fR with a Buku-compatible (see \fBBUKU\fR)
 schema to ensure interoperability. Gosuki can handle multiple browser profiles
 for each
@@ -169,7 +169,7 @@ browser detection, module loading status, and bookmark processing in the
 terminal.
 
 .SH SEE ALSO
-suki(1)
+suki(1), sqlite3(1)
 
 .SH AUTHOR
 

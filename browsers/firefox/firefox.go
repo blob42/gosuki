@@ -337,12 +337,24 @@ func (f *Firefox) GetProfile() *profiles.Profile {
 }
 
 func (f *Firefox) Init(ctx *modules.Context, p *profiles.Profile) error {
+	var err error
+	var profile *profiles.Profile
 	if p == nil {
-		// setup profile from config
-		profile, err := FirefoxProfileManager.GetProfileByName(BrowserName, f.Profile)
+		profileName := f.Profile
+
+		// parse flavour
+		parsedProfile := strings.SplitN(profileName, ":", 2)
+		if len(parsedProfile) > 1 {
+			flavour := parsedProfile[0]
+			profileName = parsedProfile[1]
+			profile, err = FirefoxProfileManager.GetProfileByName(flavour, profileName)
+		} else {
+			profile, err = FirefoxProfileManager.GetProfileByName(BrowserName, f.Profile)
+		}
 		if err != nil {
 			return err
 		}
+
 		bookmarkDir, err := profile.AbsolutePath()
 		if err != nil {
 			return err

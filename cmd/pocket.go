@@ -116,6 +116,7 @@ func importFromPocketCSV(ctx context.Context, c *cli.Command) error {
 			continue
 		}
 
+		title := row[0]
 		url := row[1]
 		title := row[0]
 		timeAdded := row[2]

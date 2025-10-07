@@ -58,7 +58,7 @@ func NewChromeConfig() *ChromeConfig {
 				Type:   tree.RootNode,
 			},
 			UseFileWatcher: true,
-			UseHooks:       []string{"node_tags_from_name", "node_marktab"},
+			UseHooks:       []string{"node_tags_from_name"},
 		},
 		ProfilePrefs: modules.ProfilePrefs{
 			Profile:          DefaultProfile,

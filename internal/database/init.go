@@ -58,7 +58,7 @@ func Init(ctx context.Context, cmd *cli.Command) {
 
 	RegisterSqliteHooks()
 	initCache(ctx)
-	startSyncScheduler()
+	startSchedulers()
 
 	config.DBPath, err = utils.ExpandOnly(config.DBPath)
 	if err != nil {

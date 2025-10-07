@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/blob42/gosuki"
 	"github.com/gofrs/uuid"
 )
 
@@ -94,6 +95,26 @@ func (nodeID UUID) Value() (driver.Value, error) {
 }
 
 type RawBookmarks []*RawBookmark
+
+func (raw RawBookmark) AsBookmark() *gosuki.Bookmark {
+	return &gosuki.Bookmark{
+		URL:      raw.URL,
+		Title:    raw.Metadata,
+		Tags:     tagsFromString(raw.Tags, TagSep).Get(),
+		Desc:     raw.Desc,
+		Module:   raw.Module,
+		Modified: raw.Modified,
+		Xhsum:    raw.XHSum,
+	}
+}
+
+func (raws RawBookmarks) AsBookmarks() []*gosuki.Bookmark {
+	res := make([]*gosuki.Bookmark, 0, len(raws))
+	for _, raw := range raws {
+		res = append(res, raw.AsBookmark())
+	}
+	return res
+}
 
 type RawBookmark struct {
 	ID  uint64

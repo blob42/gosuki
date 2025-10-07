@@ -7,42 +7,118 @@ suki \- gosuki lightweight cli \- the universal bookmark manager
 .SH DESCRIPTION
 .PP
 .B suki
-is a lightweight, efficient command-line interface designed for querying and managing
-bookmarks stored in gosuki. It offers fast, streamlined access to your bookmark collection
-while maintaining minimal resource usage, making it ideal for frequent use in terminal environments.
+is a lightweight, efficient dmenu-compatible interface for querying and managing
+bookmarks stored in gosuki(1).
 .PP
-The default output format is fully compatible with dmenu and other dmenu-compatible programs,
-enabling seamless integration into your workflow through piping. Additionally,
+The default output format is fully compatible with dmenu(1), rofi(1), fzf(1) and similar
+programs, enabling seamless integration with shell scripts through piping.
+
+.P
+Additionally,
 .B suki
 supports customizable output formatting through the
-.B -F
+.B --format (-f)
 flag, allowing you to tailor the display to your specific needs.
 .SH COMMANDS
 .TP
-\fBfuzzy, f\fR
-fuzzy search anywhere
+\fBfuzzy|f\fR \fIterm...\fR [\fI:tag1,tag2...\fR] | [\fI:OR tag1,tag2 ...\fR]
+Fuzzy search anywhere
+.IP
+Supports \fBSEARCH SYNTAX\fR for tag filtering (e.g., "term :linux,kernel")
+
+.TP
+\fBsearch|s\fR \fIterm...\fR [\fI:tag1,tag2...\fR] | [\fI:OR tag1,tag2 ...\fR]
+Search bookmarks by query and (optional) tags using AND/OR combinators. Supports
+complex queries with multiple tag filters and boolean logic for precise bookmark
+retrieval (see \fBSEARCH SYNTAX\fR).
+
+
 .TP
 \fBhelp, h\fR
 Shows a list of commands or help for one command
+.SH SEARCH SYNTAX
+
+All search commands accept a search term and optional tag filters. The search
+term can comprise multiple words, they will be matched as is against the URL and
+Title fields. Search terms come before filters.
+
+Tag filters start with a colon (:) followed by a comma-separated list of tags.
+Tags are boolean (AND) by default, meaning all specified tags must be present
+for a bookmark to match. To use OR logic between tags, prefix the tag filter
+with ":OR" followed by comma-separated tag names.
+
+.SS Syntax Details:
+.IP \(bu 2
+\fBSearch terms\fR: One or more words that will be matched against bookmark
+titles and URLs
+.IP \(bu 2
+\fBTag filters\fR: Start with colon (:) followed by comma-separated tags for AND
+logic
+.IP \(bu 2
+\fBOR tag filters\fR: Start with ":OR " followed by comma-separated tags for OR
+logic
+
+
+.SS Examples:
+.IP \(bu 2
+Search for the term \(lqfilesystem\(rq with tags \(lqlinux\(rq AND \(lqkernel\(rq
+.IP
+.RS 4
+suki s filesystem :linux,kernel
+.RE
+.IP \(bu 2
+Search for the term \(lqmemory page\(rq with tags \(lqlinux\(rq OR \(lqkernel\(rq
+.IP
+.RS 4 
+suki s memory page :OR linux,kernel
+.RE
+
+.IP \(bu 2
+Search for bookmarks with tags \(lqpython\(rq AND \(lqbook\(rq
+.IP
+.RS 4
+suki s :python,book
+.RE
+
+.IP \(bu 2
+Search for bookmarks with a single tag \(lqcooking recipe\(rq
+.IP
+.RS 4
+suki s :cooking recipe
+.RE
+
+.IP \(bu 2
+Search for bookmarks with a single tag \(lqarch debian\(rq - The :OR delimiter
+has no effect
+.IP
+.RS 4
+suki s :OR debian linux
+.RE
+
+.RE
+
 .SH OPTIONS
 .TP
 \fB--format string, -f string\fR
-Format output using a custom template
+Format output using a custom template (see \fBOUTPUT FORMAT\fR)
 .TP
-\fB--debug string\fR
-Logging level for all units \fI{trace, debug, info, warn, error, fatal, none}\fR
-You may also specify \fI<global-level>,<unit>=<level>,<unit2>=<level>,...\fR
-Use 'debug=list' to list available units (default: warn) \fI$GOSUKI_DEBUG\fR
+.B \-\-debug string 
+\fIsytanx\fR: <global-level>,<unit>=<level>
+.RS
+\fIlevels\fR: trace,debug,info,warn,error,fatal,none. (default:warn)
+.RE
+.IP
+Use \fBdebug=list\fR to list available debug levels and subsystems.
 .TP
 \fB--config path, -c path\fR
 Config path (default: ~/.config/gosuki/config.toml)
 .TP
 \fB--db path\fR
-Path where gosuki.db is stored (default: ~/.local/share/gosuki/gosuki.db)
+Database path (default: ~/.local/share/gosuki/gosuki.db)
 .TP
 \fB--help, -h\fR
 Show help
-.SH OUTPUT FORMATTING
+.SH OUTPUT FORMAT
 .PP
 You can customize the output format using the following placeholders:
 .TP
@@ -58,19 +134,24 @@ Title
 \fB%d\fR
 Description
 .PP
-You can combine these placeholders to create a custom output format. For example:
-.RS
-.B --format "%T, %u: %t"
+You can combine these placeholders to create a custom output format. The format also supports typical printf formatters for additional formatting options.
+.P
+For example:
+.P
+\fB--format "%T\\t%u\\t%t\\n"\fR: where \\t and \\n are the usual printf formatters.
 .RE
 .SH EXAMPLES
 .IP \(bu 2
 \fBsuki\fR \- Display all bookmarks in dmenu-compatible format
 .IP \(bu 2
-\fBsuki -f "%u | %t"\fR \- Show only bookmark urls
+\fBsuki -f "[%T] %u\\n"\fR \- Show tags between \(lq[]\(rq and the bookmark url.
 .IP \(bu 2
-\fBsuki "search term"\fR \- Search for specific bookmarks
+\fBsuki f term1 term2\fR \- Fuzzy search bookmarks with \(lqterm1 term2\(rq
 .IP \(bu 2
-\fBsuki | dmenu\fR \- Pipe output to dmenu for interactive selection
+\fBsuki s dma :linux,kernel \fR \- Search bookmarks with term \(lqdma\(rq and
+the tags linux AND kernel
+.IP \(bu 2
+\fBsuki | dmenu\fR \- Select and pipe all bookmarks to dmenu for interactive selection
 
 .SH SEE ALSO
 gosuki(1), dmenu(1), rofi(1), fzf(1)
