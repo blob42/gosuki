@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -107,22 +108,26 @@ func importFromPocketCSV(ctx context.Context, c *cli.Command) error {
 			continue
 		}
 
-		if len(row) < 6 {
+		if len(row) < 5 {
 			continue
 		}
 
 		url := row[1]
-		title := row[2]
-		// timeAdded := row[3]
+		title := row[0]
+		timeAdded := row[2]
 		tags := row[4]
-		desc := row[5]
+
+		i, err := strconv.ParseUint(string(timeAdded), 10, 64)
+		if err != nil {
+			panic(err)
+		}
 
 		bookmark := &gosuki.Bookmark{
-			URL:    url,
-			Title:  title,
-			Tags:   strings.Split(tags, ","),
-			Desc:   desc,
-			Module: PocketImporterID,
+			URL:      url,
+			Title:    title,
+			Tags:     strings.Split(tags, "|"),
+			Module:   PocketImporterID,
+			Modified: i,
 		}
 
 		if err = DB.UpsertBookmark(bookmark); err != nil {
