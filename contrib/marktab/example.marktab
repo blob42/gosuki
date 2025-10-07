@@ -1,0 +1,13 @@
+## Each line in a marktab file represents a rule.
+## A rule consists of three fields: trigger, pattern, and command.
+## The syntax for each line is as follows:
+##
+##	#  *  *   *
+##	#  |  |   |_____ shell command to execute
+##	#  |  |_________ pattern to match on the url or title
+##	#  |____________ trigger keyword to detect in tags
+
+# ArchiveBox integration, any bookmark saved with the tag or folder named
+# @archivebox will call the archivebox script to archive the page
+# Uncomment the following line to enable ArchiveBox integration
+#@archivebox .* ~/.local/share/gosuki/archivebox

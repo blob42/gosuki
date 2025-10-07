@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+# Script to add a URL to ArchiveBox via SSH using Docker Compose
+#
+# This script connects to a remote ArchiveBox host via SSH and executes a Docker
+# Compose command to add a URL to ArchiveBox with specified tags. The script is
+# designed for Docker-based ArchiveBox installations that are accessible through
+# SSH and managed via Docker Compose.
+#
+# Environment Variables:
+#   GOSUKI_TAGS - Tags to apply to the archived URL (inherited from environment)
+#   GOSUKI_URL  - The URL to be archived (inherited from environment)
+#   HOST - The remote host to connect to via SSH
+#
+# Configuration:
+#   COMPOSE_WORKDIR - Docker Compose project directory on the remote host
+#   ADD_URL_CMD     - Docker Compose command to add the URL with tags
+#
+# Output:
+#   Logs are appended to ~/.local/share/gosuki/archivebox.log
+
+set -euo pipefail
+
+# Ensure required variables are set
+: "${GOSUKI_URL?GOSUKI_URL must be set}"
+: "${GOSUKI_TAGS?GOSUKI_TAGS must be set}"
+
+
+
+XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share/gosuki}
+
+LOG_FILE=$XDG_DATA_HOME/gosuki/archivebox.log
+
+HOST="TARGET_HOST"
+SSH_CMD="ssh $HOST"
+COMPOSE_WORKDIR="~/docker/docker_files/archivebox"
+ADD_URL_CMD="run --rm --remove-orphans -T archivebox add --update-all --tag $GOSUKI_TAGS $GOSUKI_URL"
+DOCKER_ARGS=(
+  run
+  --rm
+  --remove-orphans
+  -T
+  archivebox
+  add
+  --update-all
+  --tag "$GOSUKI_TAGS"
+  "$GOSUKI_URL"
+)
+
+echo "ID=$GOSUKI_RUN_ID" Archiving $GOSUKI_URL >> "$LOG_FILE"
+
+
+if ! $SSH_CMD "cd $COMPOSE_WORKDIR && docker compose ${DOCKER_ARGS[*]}" 2>> "$LOG_FILE"; then
+  echo "Error: Failed to archive URL" >&2
+  exit 1
+fi
