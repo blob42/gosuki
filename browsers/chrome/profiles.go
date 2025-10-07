@@ -138,7 +138,6 @@ func (c *Chrome) UseProfile(p *profiles.Profile, flv *browsers.BrowserDef) error
 			return err
 		} else {
 			c.BkDir = bookmarkDir
-			return nil
 		}
 	}
 

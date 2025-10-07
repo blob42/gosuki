@@ -322,7 +322,6 @@ func (f *Firefox) UseProfile(p *profiles.Profile, flv *browsers.BrowserDef) erro
 			return err
 		} else {
 			f.BkDir = bookmarkDir
-			return nil
 		}
 	}
 
@@ -550,7 +549,7 @@ func (f *Firefox) addURLNode(url, title, desc string) (bool, *tree.Node) {
 	iURLNode, exists := f.URLIndex.Get(url)
 
 	modName := f.Name
-	if f.activeFlavour != nil {
+	if f.activeFlavour != nil && f.activeFlavour.Flavour != f.Name {
 		modName = fmt.Sprintf("%s_%s", modName, f.activeFlavour.Flavour)
 	}
 	if f.activeProfile != nil {

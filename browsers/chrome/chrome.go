@@ -122,7 +122,7 @@ func (rawNode *RawNode) getNode(ch *Chrome) *tree.Node {
 	node.Title = string(rawNode.title)
 	modName := ch.Name
 
-	if ch.activeFlavour != nil {
+	if ch.activeFlavour != nil && ch.activeFlavour.Flavour != ch.Name {
 		modName = fmt.Sprintf("%s_%s", modName, ch.activeFlavour.Flavour)
 	}
 	if ch.activeProfile != nil {
