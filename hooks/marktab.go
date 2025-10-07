@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/blob42/gosuki"
+	"github.com/blob42/gosuki/internal/utils"
 	"github.com/blob42/gosuki/pkg/marktab"
 	"github.com/blob42/gosuki/pkg/tree"
 )
@@ -96,13 +97,17 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 		// the bookmark details.
 		if rule.Match(bk) {
 
+			runID := utils.GenStringID(4)
+
 			// cleanout tags from builtin triggers
 			bk.Tags = slices.DeleteFunc(bk.Tags, func(in string) bool {
 				return slices.Contains(BuiltinTriggers, in)
 			})
 
 			log.Debug(
-				"running marktab",
+				"run marktab",
+				"id",
+				runID,
 				"rule",
 				rule.Trigger,
 				"url",
@@ -117,6 +122,7 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 				"GOSUKI_TITLE="+bk.Title,
 				"GOSUKI_TAGS="+strings.Join(bk.Tags, ","),
 				"GOSUKI_MODULE="+bk.Module,
+				"GOSUKI_RUN_ID="+runID,
 			)
 			if err := cmd.Start(); err != nil {
 				return fmt.Errorf("failed to start cmd: %w", err)
