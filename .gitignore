@@ -23,3 +23,5 @@ generate/generated_imports.go
 *sqlite-shm
 *sqlite-wal
 contrib/*.completions
+
+.DS_Store
