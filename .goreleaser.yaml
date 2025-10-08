@@ -1,0 +1,118 @@
+#
+#
+#
+---
+project_name: gosuki
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+git:
+  ignore_tags:
+    - "{{ if not .IsNightly }}*-rc*{{ end }}"
+
+builds:
+  - id: gosuki
+    binary: gosuki
+    main: ./cmd/gosuki
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+  
+  - id: suki
+    binary: suki
+    main: ./cmd/suki
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+
+# TODO
+# archives:
+#   - id: gosuki
+#     name_template: >-
+#       {{ .ProjectName }}_
+#       {{- if eq .Os "darwin" }}Darwin{{- else if eq .Os "linux" }}Linux{{- else if eq .Os "windows" }}Windows{{- else }}{{ .Os }}{{ end }}_
+#       {{- if eq .Arch "amd64" }}x86_64{{- else if eq .Arch "arm64" }}aarch64{{- else }}{{ .Arch }}{{ end }}_{{ .Version }}
+#     format_overrides:
+#     - goos: windows
+#     - formats: [ 'zip' ]
+
+# TODO
+# https://github.com/upx/upx
+# upx:
+#   - enabled: true
+#     ids:
+#       - gosuki
+#     goos: [linux, darwin]
+#     goarch: [amd64, arm, arm64]
+#     goarm: ["7"]
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "Performance"
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: API
+      regexp: '^.*?api(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: Documentation
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: "Tests"
+      regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
+      order: 5
+    - title: CI and Delivery
+      regexp: '^.*?ci(\([[:word:]]+\))??!?:.+$'
+      order: 6
+    - title: Others
+      order: 999
+  filters:
+    exclude:
+      - "^deps:"
+      - "^chore\\(deps\\):"
+
+release:
+  prerelease: auto
