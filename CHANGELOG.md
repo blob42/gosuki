@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- html-autoimport: parse hash tags from title 
+- import: fix pocket import from csv format
+- html-autoimport: parse hash tags from title
+- Display browser flavor in bookmark's `module` field
 
 ## [1.2.1] 2025-08-09
 

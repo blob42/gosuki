@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v3"
@@ -65,6 +66,10 @@ maintaining the original metadata including tags and read/unread status.`,
 	},
 }
 
+// CSV structure for Pocket import is:
+//
+// title,url,time_added,tags,status
+// Opération Bobcat 1942-1946 - Tahiti Heritage,https://www.tahitiheritage.pf/operation-bobcat-1942-1946/,1689230329,history|military|polynesie|usa,unread
 func importFromPocketCSV(ctx context.Context, c *cli.Command) error {
 	path := c.StringArg("path")
 	if c.StringArg("path") == "" {
@@ -107,22 +112,26 @@ func importFromPocketCSV(ctx context.Context, c *cli.Command) error {
 			continue
 		}
 
-		if len(row) < 6 {
+		if len(row) < 5 {
 			continue
 		}
 
+		title := row[0]
 		url := row[1]
-		title := row[2]
-		// timeAdded := row[3]
+		timeAdded := row[2]
 		tags := row[4]
-		desc := row[5]
+
+		modified, err := strconv.ParseUint(string(timeAdded), 10, 64)
+		if err != nil {
+			panic(err)
+		}
 
 		bookmark := &gosuki.Bookmark{
-			URL:    url,
-			Title:  title,
-			Tags:   strings.Split(tags, ","),
-			Desc:   desc,
-			Module: PocketImporterID,
+			URL:      url,
+			Title:    title,
+			Tags:     strings.Split(tags, "|"),
+			Module:   PocketImporterID,
+			Modified: modified,
 		}
 
 		if err = DB.UpsertBookmark(bookmark); err != nil {
