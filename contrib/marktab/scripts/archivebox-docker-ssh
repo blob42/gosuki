@@ -33,7 +33,7 @@ LOG_FILE=$XDG_DATA_HOME/gosuki/archivebox.log
 
 HOST="TARGET_HOST"
 SSH_CMD="ssh $HOST"
-COMPOSE_WORKDIR="~/docker/docker_files/archivebox"
+COMPOSE_WORKDIR="path_to_archivebox_compose_dir"
 ADD_URL_CMD="run --rm --remove-orphans -T archivebox add --update-all --tag $GOSUKI_TAGS $GOSUKI_URL"
 DOCKER_ARGS=(
   run
