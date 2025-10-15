@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"slices"
 	"strings"
 	"time"
 
@@ -38,12 +37,6 @@ import (
 
 const (
 	ArchiveBoxTrigger = "@archivebox"
-)
-
-var (
-	BuiltinTriggers = []string{
-		ArchiveBoxTrigger,
-	}
 )
 
 // MarkTab represents a collection of rules defined in the marktab file as lines.
@@ -98,11 +91,6 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 		if rule.Match(bk) {
 
 			runID := utils.GenStringID(4)
-
-			// cleanout tags from builtin triggers
-			bk.Tags = slices.DeleteFunc(bk.Tags, func(in string) bool {
-				return slices.Contains(BuiltinTriggers, in)
-			})
 
 			log.Debug(
 				"run marktab",

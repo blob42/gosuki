@@ -76,6 +76,20 @@ func TestParseTags(t *testing.T) {
 			expectedTags: []string{"existing", "newtag"},
 			expectError:  false,
 		},
+		{
+			name:         "Appending action to existing tags",
+			title:        "@action",
+			initialTags:  []string{"existing"},
+			expectedTags: []string{"existing", "@action"},
+			expectError:  false,
+		},
+		{
+			name:         "Valid action tags in node title",
+			title:        "This is a @action and #example",
+			initialTags:  nil,
+			expectedTags: []string{"example", "@action"},
+			expectError:  false,
+		},
 	}
 
 	for _, tt := range tests {

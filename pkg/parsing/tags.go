@@ -44,14 +44,23 @@ const (
 	//this is a end of sentence #tag
 	// ReTags = `\B#(?P<tag>\w+\.?\w+)`
 	ReTags = `#(?P<tag>[a-zA-Z0-9_.-]+)`
+
 	// #tag:notify
 	ReNotify = `\b(?P<tag>[a-zA-Z0-9_.-]+):notify`
+
+	// Action tags start with @, the regex includes the @ sign
+	ReActionTag = `@(?P<tag>[a-zA-Z0-9_.-]+)`
 )
 
 var log = logging.GetLogger("parse")
 
 func stripHashTag(s string) string {
 	return regexp.MustCompile(ReTags).ReplaceAllString(s, "")
+}
+
+// compelte this function
+func stripActionTags(s string) string {
+	return regexp.MustCompile(ReActionTag).ReplaceAllString(s, "")
 }
 
 // parseTags is a [gosuki.Hook] that extracts tags like #tag from the title of
@@ -61,33 +70,49 @@ func stripHashTag(s string) string {
 // field, and removes the matched tags from the title. If the item is of an
 // unsupported type, it returns an error.
 func parseTags(item any) error {
-	var regex = regexp.MustCompile(ReTags)
+	tagRe := regexp.MustCompile(ReTags)
+	actionTagRe := regexp.MustCompile(ReActionTag)
 	switch v := item.(type) {
 	case *tree.Node:
 		if v.Tags == nil {
 			v.Tags = []string{}
 		}
-		processTags(regex, &v.Title, &v.Tags)
+		processTags(tagRe, &v.Title, &v.Tags, false)
+		v.Title = stripHashTag(v.Title)
+		processTags(actionTagRe, &v.Title, &v.Tags, true)
+		v.Title = stripActionTags(v.Title)
 	case *gosuki.Bookmark:
 		if v.Tags == nil {
 			v.Tags = []string{}
 		}
-		processTags(regex, &v.Title, &v.Tags)
+		processTags(tagRe, &v.Title, &v.Tags, false)
+		v.Title = stripHashTag(v.Title)
+		processTags(actionTagRe, &v.Title, &v.Tags, true)
+		v.Title = stripActionTags(v.Title)
 	default:
 		return fmt.Errorf("unsupported type")
 	}
 	return nil
 }
 
-func processTags(regex *regexp.Regexp, title *string, tags *[]string) {
+func processTags(
+	regex *regexp.Regexp,
+	title *string,
+	tags *[]string,
+	withSymbol bool,
+) {
+
 	matches := regex.FindAllStringSubmatch(*title, -1)
 	for _, m := range matches {
-		*tags = append(*tags, m[1])
+		if withSymbol {
+			*tags = append(*tags, m[0])
+		} else {
+			*tags = append(*tags, m[1])
+		}
 	}
 	if len(*tags) > 0 {
 		log.Tracef("[hook] found following tags: %s", *tags)
 	}
-	*title = stripHashTag(*title)
 }
 
 func ParseNodeTags(n *tree.Node) error {
