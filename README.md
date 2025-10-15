@@ -31,7 +31,7 @@
 
 - [ ] If you're nodding your head to any of the above, then look no further:
 
-**GoSuki** is a cloudless, **extension-free**, **multi-browser**, and **real time** bookmark tracker and organizer. It packs everything in a **single binary** and captures all your bookmarks in a **portable database** with [multi-device sync](https://gosuki.net/docs/features/multi-device-sync/) capability. It will eventually support [every internet browser under the sun](#how-does-it-work-).
+**GoSuki** is a cloudless, **extension-free**, **multi-browser**, and **real time** bookmark tracker and organizer. It packs everything in a **single binary** and captures all your bookmarks in a **portable database** with [multi-device sync](https://gosuki.net/docs/features/multi-device-sync/) & [archiving][1] capability. It will eventually support [every internet browser under the sun](#how-does-it-work-).
 <br>
 <br>
 
@@ -60,6 +60,7 @@
 - 🏷️ **Tag Everything**: Tag with **#hashtags** even if your browser does not support it. You can even add tags in the Title. Your folders become tags
 - 🔎 **Real time**: Gosuki keeps track of your bookmarks, spotting any changes as they happen
 - 📱 **Multi-Device-Sync**: [Synchronize](https://gosuki.net/docs/features/multi-device-sync/) your bookmarks across multiple devices.
+- 🗃️ **Archiving** Archive your bookmarks with [ArchiveBox][1].
 - 🖥️ **Web UI + CLI** Builtin, local Web UI. Also works without Javascript. dmenu/rofi compatible CLI.
 - 🧪 **Hackable**: Modular and extensible. Custom scripts and actions per tags and folders.
 - 🌎 **Browser Agnostic**: Detects which browsers you have installed and watch changes in all of them
@@ -202,7 +203,8 @@ If you like this project consider starring the repo and [supporting the effort](
 ## Roadmap
 
 - [x] **Multi-device Sync** - [Synchronization between multiple devices](https://gosuki.net/docs/features/multi-device-sync/)
-- [ ] **Archival** - Archive bookmarks in a portable format for offline access.
+- [ ] **Archiving** - Archive bookmarks in a portable format for offline access.
+  - [x] [ArchiveBox][1] integration
 - [ ] **Linkrot** - Automatically identify broken links and replace with web.archive.org alternatives
 - [ ] **Metadata Refresh** - Automatically clean and update tags/metadata for existing bookmarks
 - [ ] **Management UI** - Intuitive interface for organizing and pruning bookmarks
@@ -250,3 +252,4 @@ Read the ["how does it compare to"](docs/how-does-it-compare-to.md) guide.
 - [Reddit: Does anyone actually use mobile bookmarks](https://www.reddit.com/r/firefox/comments/dez7hh/does_anyone_actually_use_mobile_bookmarks/)
 - [You are the dead internet](https://www.youtube.com/watch?v=aoTQPoz9_As)
 
+[1]:https://gosuki.net/docs/features/archiving/archive-box

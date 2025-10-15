@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- ArchiveBox integration using @archivebox tag or folder 
+- [ArchiveBox][01] integration using @archivebox tag or folder 
 - internal: call bookmark hooks from anywhere using bit flags
 - new export formats: pocket-html, json(pinboard/wallabag), generic XML-RSS
 - `suki search` command
@@ -130,3 +130,6 @@ Initial public release
 [1.1.0]: https://github.com/blob42/gosuki/releases/tag/v1.1.0
 [1.0.0]: https://github.com/blob42/gosuki/releases/tag/v1.0.0
 [1.0.0-rc1]: https://github.com/blob42/gosuki/releases/tag/v1.0.0-rc1
+
+
+[01]:https://gosuki.net/docs/features/archiving/archive-box/
