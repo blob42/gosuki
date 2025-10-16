@@ -136,7 +136,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
       with:
-        name: Release ${{ env.RELEASE_VERSION }}
+        name: ${{ env.RELEASE_VERSION }}
         # body: |
         #   Automated release from CI
         draft: true

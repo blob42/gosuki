@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - internal: call bookmark hooks from anywhere using bit flags
 - new export formats: pocket-html, json(pinboard/wallabag), generic XML-RSS
 - `suki search` command
-- `sudki fuzzy|search [term...] :tag1,tag2` to filter by tags with logical AND
-- `sudki fuzzy|search [term ...] :OR tag1,tag2` to filter by tags with logical OR
+- `suki fuzzy|search [term...] :tag1,tag2` to filter by tags with logical AND
+- `suki fuzzy|search [term ...] :OR tag1,tag2` to filter by tags with logical OR
 - updated queries and api to filter by query and many tags
+- Add unix manpages for `gosuki` and `suki` commands
+
 
 ### Fixed
 
