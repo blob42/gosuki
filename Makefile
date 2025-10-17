@@ -78,32 +78,6 @@ genimports:
 # Distribution packaging
 ARCH := x86_64
 
-dist: clean release
-	@$(eval release_dir=gosuki-$(VERSION)-$(OS)-$(ARCH))
-	@mkdir -p dist/$(release_dir)
-
-	# Release package
-	cp build/gosuki dist/$(release_dir)/
-	cp build/suki dist/$(release_dir)/
-	cp -r README.md LICENSE dist/$(release_dir)/
-	tar -czf dist/$(release_dir).tar.gz -C dist/ $(release_dir)
-
-	# Source Code ZIP
-	@rm dist/$(release_dir)/{gosuki,suki}
-	zip -r dist/gosuki-$(VERSION)-source.zip $$(git ls-files) -x .github\*
-	zip -r dist/gosuki-$(VERSION)-source.zip mods/reddit
-	@rm -rf dist/$(release_dir)
-
-dist-macos: clean bundle-macos
-	@$(eval release_dir=gosuki-$(VERSION)-$(OS)-$(ARCH))
-	@mkdir -p dist/$(release_dir)
-
-	# Release package
-	cp -a build/gosuki.app dist/$(release_dir)/
-	cp -r README.md LICENSE dist/$(release_dir)/
-	tar -czf dist/$(release_dir).tar.gz -C dist/ $(release_dir)
-
-
 checksums:
 	cd dist && sha256sum *.tar.gz *.zip > SHA256SUMS
 	rm -f dist/SHA256SUMS.sig
