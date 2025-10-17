@@ -204,7 +204,7 @@ If you like this project consider starring the repo and [supporting the effort](
 
 - [x] **Multi-device Sync** - [Synchronization between multiple devices](https://gosuki.net/docs/features/multi-device-sync/)
 - [ ] **Archiving** - Archive bookmarks in a portable format for offline access.
-  - [x] [ArchiveBox][1] integration
+  - [x] Integration with [ArchiveBox][1]
 - [ ] **Linkrot** - Automatically identify broken links and replace with web.archive.org alternatives
 - [ ] **Metadata Refresh** - Automatically clean and update tags/metadata for existing bookmarks
 - [ ] **Management UI** - Intuitive interface for organizing and pruning bookmarks
@@ -251,5 +251,9 @@ Read the ["how does it compare to"](docs/how-does-it-compare-to.md) guide.
 - [Ask HN: How to handle bookmarks so you can find them again?](https://news.ycombinator.com/item?id=13734253)
 - [Reddit: Does anyone actually use mobile bookmarks](https://www.reddit.com/r/firefox/comments/dez7hh/does_anyone_actually_use_mobile_bookmarks/)
 - [You are the dead internet](https://www.youtube.com/watch?v=aoTQPoz9_As)
+
+---
+
+> In memory of my father, mentor, role model, best friend, and the kindest person I have ever known.
 
 [1]:https://gosuki.net/docs/features/archiving/archive-box
