@@ -22,3 +22,11 @@
 - **A**: Yes, using the guides for:
   - **P2P Auto Sync**: [Mobile devices setup](https://gosuki.net/docs/features/multi-device-sync/p2p-auto-sync/#mobile-devices)
   - **Syncthing**: [Example mobile setup](https://gosuki.net/docs/features/multi-device-sync/syncthing/#example)
+
+----------
+
+- **Q: Can Gosuki archive bookmarks?**
+- **A**: Yes, Gosuki provides [integration][1] with [ArchiveBox][2]. Additionally, native archival capabilities are currently in development and will be available in future releases.
+
+[1]:https://gosuki.net/docs/features/archiving/archive-box/
+[2]:https://github.com/ArchiveBox/ArchiveBox
