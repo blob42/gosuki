@@ -3,7 +3,13 @@
 
 name: Build Test
 
-on: push
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+    # Skip commits that start with 'chore:'
+    branches-ignore:
+      - 'chore/**'
 
 jobs:
   build:
@@ -17,8 +23,9 @@ jobs:
 
           - os: darwin
             runs_on: macos-latest
-        
+
     runs-on: ${{ matrix.runs_on }}
+    if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:
     - uses: actions/checkout@v4
