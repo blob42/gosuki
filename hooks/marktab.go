@@ -84,6 +84,13 @@ func marktabHook(item any) error {
 }
 
 func processMtabHook(bk *gosuki.Bookmark) error {
+	var tags []string
+	for _, t := range bk.Tags {
+		if t[0] == '@' {
+			continue
+		}
+		tags = append(tags, t)
+	}
 	for _, rule := range marktab.CachedRules.Rules {
 
 		// Spawn a new shell subprocess with the rule's command, passing in
@@ -101,14 +108,14 @@ func processMtabHook(bk *gosuki.Bookmark) error {
 				"url",
 				bk.URL,
 				"tags",
-				strings.Join(bk.Tags, ","),
+				strings.Join(tags, ","),
 			)
 			cmd := exec.Command("sh", "-c", rule.Command)
 			cmd.Env = append(
 				os.Environ(),
 				"GOSUKI_URL="+bk.URL,
 				"GOSUKI_TITLE="+bk.Title,
-				"GOSUKI_TAGS="+strings.Join(bk.Tags, ","),
+				"GOSUKI_TAGS="+strings.Join(tags, ","),
 				"GOSUKI_MODULE="+bk.Module,
 				"GOSUKI_RUN_ID="+runID,
 			)
