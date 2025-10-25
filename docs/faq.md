@@ -3,12 +3,12 @@
 - **Q: Where does my data go? On my HD or somewhere in the cloud?**
 - **A**: It is stored locally in a [buku](https://github.com/jarun/buku) compatible sqlite [database](/internal/database/database.go).
 
-----------
+---
 
 - **Q: Does gosuki support bookmark deletion?**
 - **A**: No, it only supports adding/modifying bookmarks. Since it's designed to be multi-browser, multi-profile, and real-time, adding deletion functionality would introduce excessive complexity with limited benefit. Users can simply utilize the `#deleted` tag (for example) to organize deleted bookmarks within their own tag hierarchy. Given that bookmarks consume negligible storage space, this approach provides an efficient workaround.
 
-----------
+---
 
 - **Q: Is it possible to synchronize multiple devices?**
 - **A**: Yes, you can synchronize your bookmarks using:
@@ -16,17 +16,24 @@
   - [Using Syncthing](https://gosuki.net/docs/features/multi-device-sync/syncthing) 
 
 
-----------
+----
 
 - **Q: Can I synchronize with my mobile devices?**
 - **A**: Yes, using the guides for:
   - **P2P Auto Sync**: [Mobile devices setup](https://gosuki.net/docs/features/multi-device-sync/p2p-auto-sync/#mobile-devices)
   - **Syncthing**: [Example mobile setup](https://gosuki.net/docs/features/multi-device-sync/syncthing/#example)
 
-----------
+---
+
+- **Q: Does Gosuki synchronize to a central server?**
+- **A**: Gosuki doesn’t rely on a traditional centralized server, but it can emulate centralized behavior. You can run a Gosuki node on a server or in a container, and other devices can sync to it using multi-device sync. This server node acts as a central hub—its web interface serves as your primary dashboard for managing and viewing bookmarks. This setup offers the convenience of centralized access while ensuring full privacy and complete control over your data. A dedicated **Server Mode** with an admin interface is currently planned and will be available in future updates.
+
+
+---
 
 - **Q: Can Gosuki archive bookmarks?**
 - **A**: Yes, Gosuki provides [integration][1] with [ArchiveBox][2]. Additionally, native archival capabilities are currently in development and will be available in future releases.
+
 
 [1]:https://gosuki.net/docs/features/archiving/archive-box/
 [2]:https://github.com/ArchiveBox/ArchiveBox

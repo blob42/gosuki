@@ -207,7 +207,7 @@ If you like this project consider starring the repo and [supporting the effort](
   - [x] Integration with [ArchiveBox][1]
 - [ ] **Linkrot** - Automatically identify broken links and replace with web.archive.org alternatives
 - [ ] **Metadata Refresh** - Automatically clean and update tags/metadata for existing bookmarks
-- [ ] **Management UI** - Intuitive interface for organizing and pruning bookmarks
+- [ ] **Management UI** - Self-hosted server node with admin interface.
 - [ ] **Browser Sync** - Push changes back to browsers for consistent bookmark management
 - [ ] **Packaging**: Package for all common Linux distros, MacOS brew and FreeBSD ports
 - [ ] **More Platforms** - FreeBSD, Windows, Android? 
