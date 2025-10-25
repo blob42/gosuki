@@ -251,6 +251,8 @@ Read the ["how does it compare to"](docs/how-does-it-compare-to.md) guide.
 - [Ask HN: How to handle bookmarks so you can find them again?](https://news.ycombinator.com/item?id=13734253)
 - [Reddit: Does anyone actually use mobile bookmarks](https://www.reddit.com/r/firefox/comments/dez7hh/does_anyone_actually_use_mobile_bookmarks/)
 - [You are the dead internet](https://www.youtube.com/watch?v=aoTQPoz9_As)
+- [How to choose a browser for everyday use ?](https://digdeeper.neocities.org/articles/browsers.xhtml)
+- [Lifting the veil - how to test browsers for spyware](https://digdeeper.neocities.org/articles/liftingtheveil.xhtml)
 
 ---
 
