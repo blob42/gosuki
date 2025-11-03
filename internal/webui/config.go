@@ -19,11 +19,31 @@
 // along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
 package webui
 
-import "fmt"
+import (
+	"fmt"
 
-const (
-	BindPort = 2025
-	BindHost = "0.0.0.0"
+	"github.com/blob42/gosuki/pkg/config"
 )
 
-var BindAddr = fmt.Sprintf("%s:%d", BindHost, BindPort)
+var (
+	BindHost = "127.0.0.1"
+	BindPort = 2025
+	Config   *webuiConf
+	BindAddr string
+)
+
+type webuiConf struct {
+	Listen string `toml:"listen" mapstructure:"listen"`
+}
+
+func DefaultBindAddr() string {
+	return fmt.Sprintf("%s:%d", BindHost, BindPort)
+}
+
+func init() {
+	Config = &webuiConf{
+		Listen: DefaultBindAddr(),
+	}
+
+	config.RegisterConfigurator("webui", config.AsConfigurator(Config))
+}
