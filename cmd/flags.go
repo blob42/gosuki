@@ -23,6 +23,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
@@ -41,6 +42,17 @@ import (
 
 var MainFlags = []cli.Flag{
 	logging.DebugFlag,
+	&cli.BoolFlag{
+		Name:    "silent",
+		Aliases: []string{"S"},
+		Usage:   "disable all log output",
+		Action: func(_ context.Context, _ *cli.Command, val bool) error {
+			if val {
+				logging.SetLevel(logging.Silent)
+			}
+			return nil
+		},
+	},
 	&cli.StringFlag{
 		Name:        "config",
 		Aliases:     []string{"c"},

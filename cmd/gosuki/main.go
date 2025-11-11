@@ -80,18 +80,6 @@ func main() {
 			Usage:   "enable TUI interface",
 			Value:   false,
 		},
-
-		&cli.BoolFlag{
-			Name:    "silent",
-			Aliases: []string{"S"},
-			Usage:   "disable all log output",
-			Action: func(_ context.Context, _ *cli.Command, val bool) error {
-				if val {
-					logging.SetLevel(logging.Silent)
-				}
-				return nil
-			},
-		},
 	}
 
 	app.Flags = append(app.Flags, cmd.MainFlags...)

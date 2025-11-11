@@ -57,6 +57,8 @@ Usage examples:
   suki | dmenu            # Pipe output to dmenu for interactive selection`
 	app.UsageText = "suki [OPTIONS] [KEYWORD [KEYWORD...]] "
 	app.HideVersion = true
+	app.EnableShellCompletion = true
+	app.Suggest = true
 	app.CustomRootCommandHelpTemplate = AppHelpTemplate
 
 	app.Flags = []cli.Flag{
