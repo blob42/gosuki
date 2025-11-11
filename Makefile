@@ -6,7 +6,9 @@ GOBUILD := go build -v
 GOINSTALL := go install -v
 GOTEST := go test
 OS := $(shell go env GOOS)
-COMPLETIONS := $(patsubst %,%.completions, fish bash zsh)
+TARGETS := gosuki suki
+COMPLETIONS := fish bash zsh
+COMPLETION_TARGETS := $(foreach target,$(TARGETS),$(foreach type, $(COMPLETIONS), contrib/$(target)-$(type).completions))
 
 # We only return the part inside the double quote here to avoid escape issues
 # when calling the external release script. The second parameter can be used to
@@ -39,25 +41,35 @@ endif
 # shared: TAGS = $(SQLITE3_SHARED_TAGS)
 
 
+.PHONY: all
 all: prepare build
 
+.PHONY: prepare
 prepare:
 	@mkdir -p build
 
-build: 
+.PHONY: build
+build: $(foreach target,$(TARGETS),build/$(target))
+
+build/%: $(SRC)
 ifeq ($(OS), darwin)
 	@ sed -i '' 's/LoggingMode = .*/LoggingMode = Dev/' pkg/logging/log.go
 else
 	@ sed -i 's/LoggingMode = .*/LoggingMode = Dev/' pkg/logging/log.go
 endif
-	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki $(DEV_GCFLAGS) $(DEV_LDFLAGS) ./cmd/gosuki
-	$(GOBUILD) -tags "$(TAGS)" -o build/suki $(DEV_GCFLAGS) $(DEV_LDFLAGS) ./cmd/suki
+	$(call set_logging_mode)
+	$(GOBUILD) -tags "$(TAGS)" -o build/$* $(DEV_GCFLAGS) $(DEV_LDFLAGS) ./cmd/$*
 
 
-# debug: 
-# 	@#dlv debug . -- server
-# 	@go build -v $(DEV_GCFLAGS) -o build/gosuki ./cmd/gosuki
+.PHONY: debug
+debug: 
+	@#dlv debug . -- server
+	@# @go build -v $(DEV_GCFLAGS) -o build/gosuki ./cmd/gosuki
+	dlv debug --headless --listen 127.0.0.1:38697 ./cmd/gosuki -- \
+		-c /tmp/gosuki.conf.temp \
+		--db=/tmp/gosuki.db.tmp start
 
+.PHONY: release
 release: 
 ifeq ($(OS), darwin)
 	@ sed -i '' 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
@@ -68,38 +80,50 @@ endif
 	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki $(RELEASE_LDFLAGS) ./cmd/gosuki
 	$(GOBUILD) -tags "$(TAGS)" -o build/suki   $(RELEASE_LDFLAGS) ./cmd/suki
 
-docs:
+.PHONY: docs
 	@gomarkdoc -u ./... > docs/API.md
 
 
+.PHONY: genimports
 genimports: 
 	@go generate ./...
 
 # Distribution packaging
 ARCH := x86_64
 
+.PHONY: checksums
 checksums:
 	cd dist && sha256sum *.tar.gz *.zip > SHA256SUMS
 	rm -f dist/SHA256SUMS.sig
 	gpg --detach-sign -u $(GPG_SIGN_KEY) dist/SHA256SUMS
 
 
+.PHONY: testsum
 testsum:
 ifeq (, $(shell which gotestsum))
 	$(GOINSTALL) gotest.tools/gotestsum@latest
 endif
 	gotestsum -f dots-v2 $(TEST_FLAGS) . ./...
 
+.PHONY: ci-test
 ci-test:
 ifeq (, $(shell which gotestsum))
 	$(GOINSTALL) gotest.tools/gotestsum@latest
 endif
 	gotestsum -f github-actions $(TEST_FLAGS) . ./...
 
+.PHONY: test
+test:
+	go test -v ./...
+
+
+.PHONY: clean
 clean:
 	rm -rf build dist
+	rm -f contrib/*.completion
 
 # ifeq ($(OS), darwin)
+.PHONY: bundle-macos
 bundle-macos: release
 	@echo "Creating macOS app bundle..."
 	@mkdir -p build/gosuki.app/Contents/{MacOS,Resources}
@@ -139,26 +163,12 @@ bundle-macos: release
 	@echo "App bundle created at build/gosuki.app"
 # endif
 
-completions: $(COMPLETIONS)
+.PHONY: completions
+completions: $(COMPLETION_TARGETS)
 
-%.completions:
-	@go run ./cmd/gosuki -S completion $* > contrib/$@
+contrib/%.completions:
+	@echo $@
+	$(eval bin=$(shell target='$*'; echo "$${target%-*}"))
+	$(eval sh=$(shell target='$*'; echo "$${target#*-}"))
+	@go run ./cmd/$(bin) -S completion $(sh) > $@
 
-.PHONY: \
- 		all \
- 		run \
- 		clean \
- 		docs \
- 		build \
- 		test \
- 		testsum \
- 		ci-test \
- 		debug \
-		checksums \
- 		prepare \
- 		shared \
-		genimports \
- 		dist \
-		completions \
-		dist-macos \
-		bundle-macos
