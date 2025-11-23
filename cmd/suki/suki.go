@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 
 	"github.com/urfave/cli/v3"
 
@@ -73,6 +74,10 @@ Usage examples:
 
 	app.Before = func(ctx context.Context, c *cli.Command) (context.Context, error) {
 		config.Init(c.String("config"))
+		// avoid initialization in ci environment
+		if slices.Contains(build.Tags(), "ci") {
+			return ctx, nil
+		}
 		db.RegisterSqliteHooks()
 		err := db.InitDiskConn(config.DBPath)
 		if _, isDBErr := err.(db.DBError); isDBErr {

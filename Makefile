@@ -10,24 +10,26 @@ TARGETS := gosuki suki
 COMPLETIONS := fish bash zsh
 COMPLETION_TARGETS := $(foreach target,$(TARGETS),$(foreach type, $(COMPLETIONS), contrib/$(target)-$(type).completions))
 
-# We only return the part inside the double quote here to avoid escape issues
-# when calling the external release script. The second parameter can be used to
-# add additional ldflags if needed (currently only used for the release).
-
 VERSION := $(shell git describe --tags --dirty 2>/dev/null || echo "unknown")
 
 make_ldflags = $(1) -X $(PKG)/pkg/build.Describe=$(VERSION)
 #https://go.dev/doc/gdb
 # disable gc optimizations
 DEV_GCFLAGS := -gcflags "all=-N -l"
-DEV_LDFLAGS := -ldflags "$(call make_ldflags)"
+DEV_LDFLAGS = -ldflags "$(call make_ldflags)"
 
 #TODO: add optimization flags
 RELEASE_LDFLAGS := -ldflags "$(call make_ldflags, -s -w -buildid=)"
 
+BUILD_FLAGS = $(DEV_GCFLAGS) $(DEV_LDFLAGS)
+
 TAGS := $(OS) $(shell go env GOARCH)
 ifdef SYSTRAY
     TAGS += systray
+endif
+
+ifdef CI
+   TAGS += ci
 endif
 
 
@@ -48,18 +50,31 @@ all: prepare build
 prepare:
 	@mkdir -p build
 
+
+
+SED_IN_PLACE = sed -i 
+ifeq ($(OS), darwin)
+	SED_IN_PLACE = sed -i ''
+endif
+
+release_logging = $(SED_IN_PLACE) 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
+
 .PHONY: build
-build: $(foreach target,$(TARGETS),build/$(target))
+build: sanitize $(foreach target,$(TARGETS),build/$(target)) 
+
+.PHONY: sanitize
+sanitize:
+	$(call release_logging)
+
 
 build/%: $(SRC)
-ifeq ($(OS), darwin)
-	@ sed -i '' 's/LoggingMode = .*/LoggingMode = Dev/' pkg/logging/log.go
-else
-	@ sed -i 's/LoggingMode = .*/LoggingMode = Dev/' pkg/logging/log.go
-endif
-	$(call set_logging_mode)
-	$(GOBUILD) -tags "$(TAGS)" -o build/$* $(DEV_GCFLAGS) $(DEV_LDFLAGS) ./cmd/$*
+	$(GOBUILD) -tags "$(TAGS)" -o build/$* $(BUILD_FLAGS) ./cmd/$*
 
+
+
+.PHONY: release
+release: BUILD_FLAGS = $(RELEASE_LDFLAGS)
+release: build
 
 .PHONY: debug
 debug: 
@@ -68,18 +83,6 @@ debug:
 	dlv debug --headless --listen 127.0.0.1:38697 ./cmd/gosuki -- \
 		-c /tmp/gosuki.conf.temp \
 		--db=/tmp/gosuki.db.tmp start
-
-.PHONY: release
-release: 
-ifeq ($(OS), darwin)
-	@ sed -i '' 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
-else
-	@ sed -i 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
-endif
-	@$(call print, "Building release gosuki and suki.")
-	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki $(RELEASE_LDFLAGS) ./cmd/gosuki
-	$(GOBUILD) -tags "$(TAGS)" -o build/suki   $(RELEASE_LDFLAGS) ./cmd/suki
-
 .PHONY: docs
 	@gomarkdoc -u ./... > docs/API.md
 
@@ -93,6 +96,7 @@ ARCH := x86_64
 
 .PHONY: checksums
 checksums:
+	@[ -d dist ] || (echo run 'make dist' first && exit 10)
 	cd dist && sha256sum *.tar.gz *.zip > SHA256SUMS
 	rm -f dist/SHA256SUMS.sig
 	gpg --detach-sign -u $(GPG_SIGN_KEY) dist/SHA256SUMS
@@ -169,6 +173,6 @@ completions: $(COMPLETION_TARGETS)
 contrib/%.completions:
 	@echo $@
 	$(eval bin=$(shell target='$*'; echo "$${target%-*}"))
-	$(eval sh=$(shell target='$*'; echo "$${target#*-}"))
-	@go run ./cmd/$(bin) -S completion $(sh) > $@
+	$(eval type=$(shell target='$*'; echo "$${target#*-}"))
+	@go run -tags ci ./cmd/$(bin) -S completion $(type) > $@
 

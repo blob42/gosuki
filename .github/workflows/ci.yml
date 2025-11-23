@@ -40,10 +40,10 @@ jobs:
         go-version: '1.24'
 
     - name: build
-      run: make
+      run: make -B
 
     - name: build-systray
-      run: make SYSTRAY=true
+      run: make -B SYSTRAY=true
 
     - name: test
       run: make ci-test
