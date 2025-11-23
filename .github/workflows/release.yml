@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*" # Triggers on tags like v1.0.0
+  workflow_dispatch:
 
 jobs:
   release:
@@ -123,11 +124,6 @@ jobs:
         tar -czf $archive *
         echo "archive=dist/$name.tar.gz" >> $GITHUB_OUTPUT
 
-    # - name: (testing) Upload release assets
-    #   uses: https://gitea.com/actions/gitea-upload-artifact@v4
-    #   with:
-    #     name: ${{ env.RELEASE_NAME }}
-    #     path: dist/*
   
     # - name: debug env
     #   run: echo 
@@ -146,24 +142,3 @@ jobs:
         files: |
           ${{ steps.package.outputs.archive }}
 
-    # # Cross-platform build (uncomment to use):
-    # - name: Cross-platform builds
-    #   strategy:
-    #     matrix:
-    #       goos: [linux, windows, darwin]
-    #       goarch: [amd64, 386, arm64]
-    #   runs-on: ubuntu-latest
-    #   steps:
-    #     - name: Set GOOS/GOARCH
-    #       run: |
-    #         echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
-    #         echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
-    #     - name: Build
-    #       run: make release
-    #     - name: Package
-    #       run: make dist
-    #     - name: Upload artifact
-    #       uses: actions/upload-artifact@v4
-    #       with:
-    #         name: release-assets-${{ matrix.goos }}-${{ matrix.goarch }}
-    #         path: dist/*.tar.gz
