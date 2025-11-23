@@ -5,14 +5,12 @@ name: Build Test
 
 on:
   push:
-    paths-ignore:
-      - '**.md'
-    # Skip commits that start with 'chore:'
-    branches-ignore:
-      - 'chore/**'
+    paths-ignore: ['**.md']
+    branches-ignore: ['chore/**']
 
 jobs:
   build:
+    name: build-test
     strategy:
       matrix:
         arch: [amd64]

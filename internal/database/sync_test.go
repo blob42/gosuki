@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -93,7 +94,14 @@ func TestSyncToCache(t *testing.T) {
 	var count int
 	var version uint64
 
-	go startSchedulers()
+	// Avoid race conditions, scheduler must be ready before feeding in cache jobs
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		startSchedulers()
+	}()
+	wg.Wait()
 
 	Clock = &LamportClock{}
 	require.Equal(t, uint64(0), Clock.Value)
@@ -120,6 +128,8 @@ func TestSyncToCache(t *testing.T) {
 		err := buffer.UpsertBookmark(&bm)
 		require.NoError(t, err)
 
+		require.NotNil(t, cacheL1, "nil cache L1")
+		require.NotNil(t, cacheL2, "nil cache L2")
 		buffer.SyncTo(cacheL1)
 		cacheL1.SyncTo(cacheL2)
 
