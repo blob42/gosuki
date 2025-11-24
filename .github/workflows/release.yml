@@ -8,7 +8,7 @@ on:
 
 jobs:
   release:
-
+    name: Release
     strategy:
       # https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63
       matrix:
@@ -28,6 +28,14 @@ jobs:
 
 
     runs-on: ${{ matrix.runs_on }}
+    env:
+      CI: true
+
+    outputs:
+      release-version: ${{ steps.version.outputs.release-version }}
+      deb-version: ${{ steps.version.outputs.deb-version  }}
+      pkg-name: ${{ steps.pkgname.outputs.name  }}
+      build-artifact: ${{ steps.package.outputs.release-name }}
 
     steps:
     - name: Checkout code
@@ -37,6 +45,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set Release Version
+      id: version
       shell: bash
       run: |
         ver=${GITHUB_REF##*/}
@@ -45,27 +54,30 @@ jobs:
           exit 1
         fi
 
+        # Check if the ref is release candidate
+        if [[ "$ver" =~ -rc[0-9]+$ ]]; then
+          echo "is-rc=true" >> $GITHUB_OUTPUT
+        else
+          echo "is-rc=false" >> $GITHUB_OUTPUT
+        fi
+
         echo "RELEASE_VERSION=$ver" >> $GITHUB_ENV
+        echo "release-version=$ver" >> $GITHUB_OUTPUT
+
+        # Debian revision: <upstream>-<debian-revision>
+        echo "deb-version=${ver#v*}-1" >> $GITHUB_OUTPUT
 
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: '1.24'
 
-    # - name: debug env
-    #   run: |
-    #     echo "${{ toJSON(env) }}"
-    #     echo "${{ toJSON(github) }}"
-    #     echo "${{ toJSON(jobs) }}"
+    - name: Pakcage Name
+      id: pkgname
+      run: |
+        echo "name=${GITHUB_REPOSITORY##*/}" >> $GITHUB_OUTPUT
 
 
-    #- name: Setup Cross-Compile
-    #  if: "${{ matrix.arch == 'arm64' }}"
-    #  run: |
-    #    set -euxo pipefail
-    #    apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-    #    env CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ CGO_ENABLED=1 GOOS=linux GOARCH=arm64
-      #
     - name: Dependencies linux
       if: ${{ matrix.os == 'linux' }}
       run: |
@@ -78,7 +90,7 @@ jobs:
 
     - name: Build
       run: |
-        set -euxo pipefail
+        set -euo pipefail
 
         make genimports
         export CGO_ENABLED=1
@@ -102,21 +114,28 @@ jobs:
       id: package
       env:
         version: ${{ env.RELEASE_VERSION }}
+        bin: ${{ steps.pkgname.outputs.name }}
       run: |
         set -euxo pipefail
+
+        make -B completions
 
         # echo "version=${{ steps.check-tag.outputs.version }}"
         # echo "rc=${{ steps.check-tag.outputs.rc }}"
 
-        bin=${GITHUB_REPOSITORY##*/}
         dist_dir=`pwd`/dist
         name=$bin-$version-${{ matrix.os }}-${{ matrix.arch }}
-        echo "RELEASE_NAME=$name" >> $GITHUB_ENV
+        echo "release-name=$name" >> $GITHUB_OUTPUT
 
         mkdir -p $dist_dir/$bin-$version
 
         cp -a build/* {LICENSE,README.md} $dist_dir/$bin-$version
-        echo "dist_dir=$dist_dir" >> $GITHUB_OUTPUT
+        mkdir -p $dist_dir/$bin-$version/contrib/{man,completions}
+        cp -a contrib/marktab $dist_dir/$bin-$version/contrib/
+        cp contrib/*.completions $dist_dir/$bin-$version/contrib/completions/
+        cp contrib/*.1 $dist_dir/$bin-$version/contrib/man
+
+        echo "release-dir=$dist_dir/$bin-$version" >> $GITHUB_OUTPUT
 
         cd $dist_dir
 
@@ -124,9 +143,13 @@ jobs:
         tar -czf $archive *
         echo "archive=dist/$name.tar.gz" >> $GITHUB_OUTPUT
 
-  
-    # - name: debug env
-    #   run: echo 
+    # upload dist artifact
+    - name: Save build artifact
+      uses: actions/upload-artifact@v5
+      with:
+        name: ${{ steps.package.outputs.release-name }}
+        path: ${{ steps.package.outputs.release-dir }}
+        retention-days: 1
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -136,9 +159,98 @@ jobs:
         # body: |
         #   Automated release from CI
         draft: true
-        prerelease: false
+        prerelease: ${{ steps.version.outputs.is-rc}}
         generate_release_notes: true
         token: ${{ secrets.GITHUB_TOKEN }}
+        body_path: .github/release_tpl.md
         files: |
           ${{ steps.package.outputs.archive }}
 
+
+  debian-package:
+    name: Debian Package
+    strategy:
+      matrix:
+        arch: [amd64, 386, arm64]
+    needs: release
+    runs-on: ubuntu-latest
+
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ needs.release.outputs.build-artifact }}
+        path: release
+
+    - name: Build debian package
+      id: build-deb
+      env:
+        ARCH: ${{ matrix.arch }}
+        BUILD_DIR: ${{ runner.temp }}/debian_build
+        PKG_NAME: ${{ needs.release.outputs.pkg-name }}
+        DEB_VERSION: ${{ needs.release.outputs.deb-version }}
+      run: |
+          set -euxo pipefail
+
+          mkdir -p build
+          cp release/{gosuki,suki} build
+          cp release/contrib/completions/* contrib/
+
+          # the built deb pacakage path is in outputs.deb-package
+          ./packages/debian/build-deb.sh
+
+    - name: Upload debian package
+      id: debian-package-upload
+      env:
+        DEB_REGISTRY: ${{ vars.DEB_REGISTRY }}
+        DEB_REGISTRY_KEY: ${{ secrets.DEB_REGISTRY_KEY }}
+        DEB_REGISTRY_USER: ${{ secrets.DEB_REGISTRY_USER }}
+        PKG_NAME: ${{ needs.release.outputs.pkg-name }}
+        DEB_VERSION: ${{ needs.release.outputs.deb-version }}
+        DEB_PACKAGE: ${{ steps.build-deb.outputs.deb-package }}
+
+      shell: bash
+      run: |
+          set -euxo pipefail
+
+          echo "uploading $DEB_PACKAGE to Debian repo"
+
+          # Upload Codes
+          # 409 Confilict: file already exists
+          # Success: 201
+          curl_params="-sf -w '%{http_code}' --user $DEB_REGISTRY_USER:$DEB_REGISTRY_KEY"
+          upload_cmd="curl $curl_params --upload-file $DEB_PACKAGE $DEB_REGISTRY/upload"
+
+          # Success: 204
+          # 404: Not found
+          delete_cmd="curl $curl_params -X DELETE $DEB_REGISTRY/$PKG_NAME/$DEB_VERSION/${{ matrix.arch }}"
+
+          if ! http_code=$(eval $upload_cmd); then
+
+            if [[ $http_code -lt 200 ]] || [[ $http_code -ge 400 ]]; then
+              echo "::error:: http_code: $http_code"
+
+              if [[ $http_code == 409 ]]; then
+                echo '::warning::error code 409: file already exists, trying a DELETE first'
+                eval $delete_cmd
+                http_code=$(eval $upload_cmd)
+                [[ $http_code -lt 400 ]] || exit 1
+              else
+                exit 1
+              fi
+            fi
+          fi
+
+    - name: Update GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: |
+          ${{ steps.build-deb.outputs.deb-package }}

@@ -9,8 +9,8 @@ on:
     branches-ignore: ['chore/**']
 
 jobs:
-  build:
-    name: build-test
+  build-test:
+    name: CI
     strategy:
       matrix:
         arch: [amd64]
@@ -23,6 +23,8 @@ jobs:
             runs_on: macos-latest
 
     runs-on: ${{ matrix.runs_on }}
+    env:
+      CI: true
     if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:

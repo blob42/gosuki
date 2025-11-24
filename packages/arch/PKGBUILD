@@ -3,8 +3,8 @@
 
 pkgname=gosuki-git
 _pkgname=${pkgname%-git}
-pkgver=v1.3.0
-pkgrel=2
+pkgver=v1.3.0.r15.g5224e22
+pkgrel=1
 pkgdesc="Multi-browser, real-time, extension-free bookmark manager with p2p synchronization and archiving"
 arch=('i686' 'x86_64')
 makedepends=(git git-lfs go make sqlite)
@@ -39,9 +39,7 @@ build() {
   make SYSTRAY=true release
 
   msg2 'Generating shell completions...'
-  for _sh in bash zsh fish; do
-    build/gosuki -S completion $_sh > contrib/$_sh.completions
-  done
+  make -B completions
 }
 
 package() {
@@ -55,15 +53,34 @@ package() {
     "$pkgdir/usr/lib/systemd/user/${_pkgname}.service"
 
 
-  # completions
-  install -Dm 644 contrib/fish.completions \
-    "${pkgdir}/usr/share/fish/completions/${_pkgname}.fish"
+  # Completions
+  for completion_file in contrib/*-*.completions; do
+      # Skip if no files match the pattern
+      [[ -e "$completion_file" ]] || continue
 
-  install -Dm 644 contrib/bash.completions \
-    "${pkgdir}/usr/share/bash-completion/completions/${_pkgname}"
+      # Extract the completion type (e.g., fish, bash, zsh) from filename
+      basename=$(basename "$completion_file")
+      basename=${basename%.completions}
+      type=${basename#*-}
+      bin=${basename%-*}
 
-  install -Dm 644 contrib/zsh.completions \
-    "${pkgdir}/usr/share/zsh/site-functions/_${_pkgname}"
+      case "$type" in
+          fish)
+              install -Dm 644 "$completion_file" "${pkgdir}/usr/share/fish/completions/${bin}.fish"
+              ;;
+          bash)
+              install -Dm 644 "$completion_file" "${pkgdir}/usr/share/bash-completion/completions/${bin}"
+              ;;
+          zsh)
+              install -Dm 644 "$completion_file" "${pkgdir}/usr/share/zsh/site-functions/_${bin}"
+              ;;
+          *)
+              exit 1
+              echo "Unsupported completion type: $type"
+              ;;
+      esac
+  done
+
 
   # documentation
   for _doc in README.md; do
