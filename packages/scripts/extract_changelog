@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+version="$1"
+awk 'BEGIN { started=0; }
+
+{ 
+    if ($0 ~ /^## *\['$version'.*$/) {
+        started=1;
+    } else if ($0 ~ /^## \[.*$/) {
+        started=0;
+    } else if (started) { print $0 }
+
+}'

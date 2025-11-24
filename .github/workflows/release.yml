@@ -1,3 +1,4 @@
+# vim: foldmethod=indent
 name: Release
 
 on:

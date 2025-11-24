@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Custom daemon listening address with `--listen` flag or `webui` config section
+- Distribution package scripts for Arch Linux and Debian
+
+### Changed
+
+- **(security)* Listen on `127.0.0.1` by default
+
+
+
 ## [1.3.0] 2025-10-16
 
 ### Added
