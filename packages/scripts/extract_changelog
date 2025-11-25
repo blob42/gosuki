@@ -1,12 +1,18 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 version="$1"
-awk 'BEGIN { started=0; }
+awk 'BEGIN { started=0; lines=0; }
 
 { 
     if ($0 ~ /^## *\['$version'.*$/) {
         started=1;
     } else if ($0 ~ /^## \[.*$/) {
         started=0;
-    } else if (started) { print $0 }
+    } else if (started) { print $0; lines++; }
 
+}
+END{
+    if (lines == 0) {
+        print "::error:: missing version '$version' from changelog"
+        exit 10
+    }
 }'

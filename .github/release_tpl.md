@@ -1,11 +1,10 @@
-{{title}}
 
-{{summary}}
+{{.summary}}
 
 
 ## What Changed
 
-{{changelog}}
+{{.changelog}}
 
 ## Installation
 
@@ -21,7 +20,7 @@ You can build from the `PKGBUILD` file in `packages/arch/PKGBUILD`
 
 Full instructions at [https://git.blob42.xyz/gosuki.net/-/packages/debian/gosuki](https://git.blob42.xyz/gosuki.net/-/packages/debian/gosuki)
 
-🖥️Setup this registry from the command line:
+Setup this registry from the command line:
 
 ```sh
 sudo curl https://git.blob42.xyz/api/packages/gosuki.net/debian/repository.key -o /etc/apt/keyrings/gosuki.asc
@@ -30,9 +29,9 @@ echo "deb [signed-by=/etc/apt/keyrings/gosuki.asc] https://git.blob42.xyz/api/pa
 sudo apt update
 ```
 
-🖥️To install the package, run the following command:
+To install the package, run the following command:
 ```sh
-sudo apt install gosuki={{deb-version}}
+sudo apt install gosuki={{.debVersion}}
 ```
 
 ### From Source
@@ -54,4 +53,4 @@ go install github.com/blob42/gosuki/cmd/suki@latest
 
 ## New Contributors
 
-{{contributors}}
+{{.contributors}}

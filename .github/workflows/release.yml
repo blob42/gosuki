@@ -117,7 +117,7 @@ jobs:
         version: ${{ env.RELEASE_VERSION }}
         bin: ${{ steps.pkgname.outputs.name }}
       run: |
-        set -euxo pipefail
+        set -euo pipefail
 
         make -B completions
 
@@ -152,6 +152,35 @@ jobs:
         path: ${{ steps.package.outputs.release-dir }}
         retention-days: 1
 
+
+    - name: Prepare Changelog
+      id: changelog
+      # disables fail-fast to control exit code behavior
+      shell: bash {0}
+      run: |
+        set -x
+        version=$(echo ${RELEASE_VERSION%-*} | cut -b 2-)
+        packages/scripts/extract_changelog "$version" <CHANGELOG.md> '${{runner.temp}}/changelog' 
+        if [[ $? == 10 ]]; then
+          echo "::error file=CHANGELOG.md:: missing changelog version $version"
+          set -e && exit 10
+        fi
+
+
+    - name: Prepare Release Notes
+      id: release-notes
+      shell: bash
+      env:
+        DEB_VERSION: ${{steps.version.outputs.deb-version}}
+      run: |
+        set -euo pipefail
+
+        release_tmpl=.github/release_tpl.md 
+        gen_notes=packages/scripts/gen_notes.go
+        go run $gen_notes -deb-version $DEB_VERSION \
+              -changelog  '${{runner.temp}}/changelog' \
+              <$release_tmpl > '${{runner.temp}}'/release_note.md
+
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
@@ -163,7 +192,7 @@ jobs:
         prerelease: ${{ steps.version.outputs.is-rc}}
         generate_release_notes: true
         token: ${{ secrets.GITHUB_TOKEN }}
-        body_path: .github/release_tpl.md
+        body_path: ${{ runner.temp }}/release_note.md
         files: |
           ${{ steps.package.outputs.archive }}
 
@@ -197,7 +226,7 @@ jobs:
         PKG_NAME: ${{ needs.release.outputs.pkg-name }}
         DEB_VERSION: ${{ needs.release.outputs.deb-version }}
       run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           mkdir -p build
           cp release/{gosuki,suki} build
@@ -218,7 +247,7 @@ jobs:
 
       shell: bash
       run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           echo "uploading $DEB_PACKAGE to Debian repo"
 
@@ -238,7 +267,8 @@ jobs:
               echo "::error:: http_code: $http_code"
 
               if [[ $http_code == 409 ]]; then
-                echo '::warning::error code 409: file already exists, trying a DELETE first'
+                echo '::warning:: deb package upload : http code 409: file already exists'
+                echo '::info:: trying a DELETE first'
                 eval $delete_cmd
                 http_code=$(eval $upload_cmd)
                 [[ $http_code -lt 400 ]] || exit 1
