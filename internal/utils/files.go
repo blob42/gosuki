@@ -95,15 +95,21 @@ func CleanFiles() {
 		}
 		if matched, _ := filepath.Match("/tmp/gosuki*", path); matched {
 			log.Debugf("removing glob file: %s", path)
-			err = os.RemoveAll(path)
-			if err != nil {
-				return nil // Ignore errors when removing files (e.g., permission issues)
-			}
+			os.RemoveAll(path)
 		}
 		return nil // Ensure only the first match is processed
 	})
 	if err != nil && err != filepath.SkipDir {
 		log.Fatal(err)
+	}
+}
+
+// cleans a specific directory
+func CleanDirectory(dirPath string) {
+	log.Debugf("cleaning directory <%s>", dirPath)
+	err := os.RemoveAll(dirPath)
+	if err != nil {
+		log.Errorf("failed to clean directory <%s>: %v", dirPath, err)
 	}
 }
 
@@ -125,6 +131,7 @@ func CountLines(f *os.File) (int, error) {
 
 func init() {
 	var err error
+	CleanFiles()
 	TMPDIR, err = os.MkdirTemp("", "gosuki*")
 	if err != nil {
 		log.Fatal(err)

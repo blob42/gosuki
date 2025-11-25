@@ -12,11 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Custom daemon listening address with `--listen` flag or `webui` config section
-- Distribution package scripts for Arch Linux and Debian
+- Distribution packages builds for Arch Linux and Debian
 
 ### Changed
 
 - **(security)* Listen on `127.0.0.1` by default
+
+### Fixed
+
+- Ensure cleaning of residual temp files that can cumulate if gosuki is
+not restarted
 
 
 

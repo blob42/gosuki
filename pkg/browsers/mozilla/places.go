@@ -160,5 +160,42 @@ func (pc PlaceCopyJob) Path() string {
 
 func (pc PlaceCopyJob) Clean() error {
 	log.Debugf("cleaning <%s>", pc.Path())
-	return os.RemoveAll(pc.Path())
+	err := os.RemoveAll(pc.Path())
+	if err != nil {
+		return err
+	}
+	return cleanOldCopyJobs()
+}
+
+// cleans previous copy jobs that are older than 1hour
+func cleanOldCopyJobs() error {
+	now := time.Now()
+
+	// Filter out old jobs and clean them; keep only recent ones
+	var validJobs []PlaceCopyJob
+
+	for _, job := range CopyJobs {
+		info, err := os.Stat(job.Path())
+		if err != nil {
+			if os.IsNotExist(err) {
+				// Skip jobs whose directories no longer exist
+				continue
+			}
+			return err // Return error for other stat failures
+		}
+
+		if now.Sub(info.ModTime()) > time.Hour {
+			if err := job.Clean(); err != nil {
+				return err // Return error if cleaning fails
+			}
+			// Skip this job (it's old and cleaned)
+			continue
+		}
+
+		// Keep this job (recent)
+		validJobs = append(validJobs, job)
+	}
+
+	CopyJobs = validJobs
+	return nil
 }
