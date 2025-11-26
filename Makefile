@@ -126,7 +126,6 @@ clean:
 	rm -rf build dist
 	rm -f contrib/*.completion
 
-# ifeq ($(OS), darwin)
 .PHONY: bundle-macos
 bundle-macos: release
 	@echo "Creating macOS app bundle..."
@@ -158,14 +157,13 @@ bundle-macos: release
 	@echo '	<key>LSApplicationCategoryType</key>' >> build/gosuki.app/Contents/Info.plist
 	@echo '	<string>com.apple.application-type.gui</string>' >> build/gosuki.app/Contents/Info.plist
 	@echo '	<key>NSHumanReadableCopyright</key>' >> build/gosuki.app/Contents/Info.plist
-	@echo '	<string>Copyright © 2023 Your Company. All rights reserved.</string>' >> build/gosuki.app/Contents/Info.plist
+	@echo '	<string>Copyright © 2025 Chakib Benziane (contact@blob42.xyz). All rights reserved.</string>' >> build/gosuki.app/Contents/Info.plist
 	@echo '</dict>' >> build/gosuki.app/Contents/Info.plist
 	@echo '</plist>' >> build/gosuki.app/Contents/Info.plist
 
 	# Add entitlements file 
 	@cp ./assets/macos/Info.entitlements build/gosuki.app/Contents/
 	@echo "App bundle created at build/gosuki.app"
-# endif
 
 .PHONY: completions
 completions: $(COMPLETION_TARGETS)
