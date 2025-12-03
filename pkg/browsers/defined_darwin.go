@@ -27,6 +27,7 @@ package browsers
 var DefinedBrowsers = []BrowserDef{
 	Firefox,
 	Librewolf,
+	Zen,
 	Chrome,
 	Chromium,
 	QuteBrowser,
@@ -67,6 +68,12 @@ var (
 	Librewolf = MozBrowser(
 		"librewolf",
 		"~/Library/Application Support/Librewolf",
+		"", "",
+	)
+
+	Zen = MozBrowser(
+		"zen",
+		"~/Library/Application Support/zen",
 		"", "",
 	)
 )

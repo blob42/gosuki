@@ -28,6 +28,7 @@ var DefinedBrowsers = []BrowserDef{
 	Firefox,
 	Librewolf,
 	Waterfox,
+	Zen,
 	Chrome,
 	Chromium,
 	Brave,
@@ -88,6 +89,13 @@ var (
 		"~/.waterfox",
 		"/nonexistent",
 		"~/.var/app/net.waterfox.waterfox/.waterfox",
+	)
+
+	Zen = MozBrowser(
+		"zen",
+		"~/.zen",
+		"/nonexistent",
+		"~/.var/app/app.zen_browser.zen/.zen",
 	)
 )
 
