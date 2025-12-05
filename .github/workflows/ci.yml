@@ -10,10 +10,9 @@ on:
 
 jobs:
   build-test:
-    name: CI
     strategy:
       matrix:
-        arch: [amd64]
+        arch: [amd64, arm64, 386]
         os: [linux, darwin]
         include:
           - os: linux
@@ -21,6 +20,11 @@ jobs:
 
           - os: darwin
             runs_on: macos-latest
+        exclude:
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: 386
 
     runs-on: ${{ matrix.runs_on }}
     env:
@@ -28,6 +32,12 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:
+
+    - name: Dependencies linux 386
+      if: ${{ matrix.os == 'linux' && matrix.arch == '386' }}
+      run: |
+          sudo apt install -y gcc-multilib g++-multilib
+
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
@@ -47,3 +57,48 @@ jobs:
 
     - name: test
       run: make ci-test
+
+  test:
+    strategy:
+      matrix:
+        arch: [amd64, arm64, 386]
+        os: [linux, darwin]
+        include:
+          - os: linux
+            runs_on: ubuntu-latest
+
+          - os: darwin
+            runs_on: macos-latest
+
+        exclude:
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: 386
+
+    runs-on: ${{ matrix.runs_on }}
+    env:
+      CI: true
+    if: "!contains(github.event.head_commit.message, 'chore')"
+
+    steps:
+    - name: Dependencies linux 386
+      if: ${{ matrix.os == 'linux' && matrix.arch == '386' }}
+      run: |
+          sudo apt install -y gcc-multilib g++-multilib
+
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: 0
+
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+
+    - name: make ci-test
+      run: |
+        make gen
+        make ci-test
