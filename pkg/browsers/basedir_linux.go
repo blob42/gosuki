@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	Flat = "flat"
-	Snap = "snap"
+	Flatpak = "flat"
+	Snap    = "snap"
 )
 
 var log = logging.GetLogger("browsers")
@@ -43,43 +43,43 @@ var log = logging.GetLogger("browsers")
 // }
 
 // base directory without normalization
-func (b BrowserDef) BaseDir() string {
-	if b.flatDir != "" && isValidDir(b.flatDir, Flat) {
-		return b.flatDir
+func (b BrowserDef) GetBaseDir() string {
+	if b.FlatpakDir != "" && isValidDir(b.FlatpakDir, Flatpak) {
+		return b.FlatpakDir
 	}
-	if b.snapDir != "" && isValidDir(b.snapDir, Snap) {
-		return b.snapDir
+	if b.SnapDir != "" && isValidDir(b.SnapDir, Snap) {
+		return b.SnapDir
 	}
-	return b.baseDir
+	return b.BaseDir
 }
 
 // Expands to the full path of base directory
 // If browser installed as snap or flatpak, expand to respective base dir
 func (b BrowserDef) ExpandBaseDir() (string, error) {
-	if b.flatDir != "" && isValidDir(b.flatDir, Flat) {
-		return utils.ExpandPath(b.flatDir)
+	if b.FlatpakDir != "" && isValidDir(b.FlatpakDir, Flatpak) {
+		return utils.ExpandPath(b.FlatpakDir)
 	}
-	if b.snapDir != "" && isValidDir(b.snapDir, Snap) {
-		return utils.ExpandPath(b.snapDir)
+	if b.SnapDir != "" && isValidDir(b.SnapDir, Snap) {
+		return utils.ExpandPath(b.SnapDir)
 	}
-	return utils.ExpandPath(b.baseDir)
+	return utils.ExpandPath(b.BaseDir)
 }
 
 // detects whether path is a snap directory
-func isValidDir(dir string, pt string) bool {
+func isValidDir(dir string, ptype string) bool {
 	if dir == "" {
 		return false
 	}
 
 	normDir, err := utils.ExpandOnly(dir)
 	if err != nil {
-		log.Errorf("%s path: %s", pt, err)
+		log.Errorf("%s path: %s", ptype, err)
 		return false
 	}
 
 	ok, err := utils.DirExists(normDir)
 	if err != nil {
-		log.Debugf("%s path: %s : %s", pt, dir, err)
+		log.Debugf("%s path: %s : %s", ptype, dir, err)
 	}
 	return ok
 }

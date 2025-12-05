@@ -20,6 +20,7 @@
 //  along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+//go:generate go run ./gen browsers.yaml
 package browsers
 
 import "github.com/blob42/gosuki/internal/utils"
@@ -38,20 +39,20 @@ type BrowserDef struct {
 	Family BrowserFamily // browser family
 
 	// Base browser directory path
-	baseDir string
+	BaseDir string
 
 	// (linux only) path to snap package base dir
-	snapDir string
+	SnapDir string
 
 	// (linux only) path to flatpak package base dir
-	flatDir string
+	FlatpakDir string
 }
 
 func (b BrowserDef) Detect() bool {
 	var dir string
 	var err error
 	if dir, err = b.ExpandBaseDir(); err != nil {
-		log.Debugf("expand path: %s: %s", b.BaseDir(), err)
+		log.Debugf("expand path: %s: %s", b.GetBaseDir(), err)
 		log.Info("skipping", "flavour", b.Flavour)
 	} else if ok, err := utils.DirExists(dir); err != nil || !ok {
 		log.Infof("could not detect <%s>: %s: %s", b.Flavour, dir, err)
@@ -63,32 +64,20 @@ func (b BrowserDef) Detect() bool {
 
 func MozBrowser(flavour, base, snap, flat string) BrowserDef {
 	return BrowserDef{
-		Flavour: flavour,
-		baseDir: base,
-		Family:  Mozilla,
-		snapDir: snap,
-		flatDir: flat,
+		Flavour:    flavour,
+		BaseDir:    base,
+		Family:     Mozilla,
+		SnapDir:    snap,
+		FlatpakDir: flat,
 	}
 }
 
 func ChromeBrowser(flavour, base, snap, flat string) BrowserDef {
 	return BrowserDef{
-		Flavour: flavour,
-		baseDir: base,
-		Family:  ChromeBased,
-		snapDir: snap,
-		flatDir: flat,
+		Flavour:    flavour,
+		BaseDir:    base,
+		Family:     ChromeBased,
+		SnapDir:    snap,
+		FlatpakDir: flat,
 	}
-}
-
-// Returns defined browsers of type `Mozilla`
-func Defined(family BrowserFamily) map[string]BrowserDef {
-	result := map[string]BrowserDef{}
-	for _, bd := range DefinedBrowsers {
-		if bd.Family == family {
-			result[bd.Flavour] = bd
-		}
-	}
-
-	return result
 }

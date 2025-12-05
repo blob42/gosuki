@@ -149,7 +149,7 @@ var DetectCmd = &cli.Command{
 			for _, f := range flavours {
 				log.Debugf("considering flavour <%s> of <%s>", f.Flavour, mod.ModInfo().ID)
 				if dir, err := f.ExpandBaseDir(); err != nil {
-					log.Info("base directory not found", "path", f.BaseDir(), "flavour", f.Flavour)
+					log.Info("base directory not found", "path", f.GetBaseDir(), "flavour", f.Flavour)
 					continue
 				} else {
 					fmt.Printf(" %s %-10s \t %s\n", green(""), f.Flavour, dir)

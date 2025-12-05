@@ -57,18 +57,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %s", err)
 	}
-	// fmt.Println("module: ", module)
 
 	ctx := context.Background()
 	cfg := &packages.Config{
 		Mode:    0,
 		Context: ctx,
 	}
-	// pkg, err := packages.Load(cfg, module+"/mods/importer")
-	// if err != nil {
-	// 	log.Fatalf("error: %w", err)
-	// }
-	// pretty.Print(pkg)
 
 	disabledRe := regexp.MustCompile(`\.disabled$`)
 
@@ -88,16 +82,14 @@ func main() {
 
 import (
 `
+	println("Generating module imports...")
 	fmt.Fprint(file, header)
 	err = filepath.WalkDir(targetPrefix, func(path string, d fs.DirEntry, err error) error {
-		// fmt.Printf("%#v\n", path)
-		// fmt.Printf("%#v\n", targetPrefix)
 
 		if path == targetPrefix {
 			return nil
 		}
 
-		// pretty.Print(d)
 		if err != nil {
 			return err
 		}
@@ -111,7 +103,6 @@ import (
 		}
 
 		rel, _ := filepath.Rel(path, targetPrefix)
-		// fmt.Println("rel ", rel)
 		if rel != ".." {
 			return filepath.SkipDir
 		}
@@ -126,13 +117,14 @@ import (
 		}
 
 		for _, pkg := range pkgs {
-			// pretty.Print(pkg)
 			fmt.Fprintf(file, "\t_ \"%s\"\n", pkg.ID)
+			fmt.Printf("\t_ \"%s\"\n", pkg.ID)
 		}
 
 		return nil
 	})
 	fmt.Fprintln(file, ")")
+	println()
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error walking the path %q: %v\n", targetPrefix, err)

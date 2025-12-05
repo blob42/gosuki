@@ -32,11 +32,11 @@ import (
 var log = logging.GetLogger("browsers")
 
 // base directory without normalization
-func (b BrowserDef) BaseDir() string {
-	return b.baseDir
+func (b BrowserDef) GetBaseDir() string {
+	return b.BaseDir
 }
 
 // Expands to the full path of base directory
 func (b BrowserDef) ExpandBaseDir() (string, error) {
-	return utils.ExpandPath(b.baseDir)
+	return utils.ExpandPath(b.BaseDir)
 }

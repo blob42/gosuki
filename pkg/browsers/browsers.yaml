@@ -1,0 +1,73 @@
+# chrome based browsers
+chrome:
+
+  chrome: # name of the browser flavour
+    linux: # platform specific definition
+
+      # base directory of the default OS package system
+      base_dir: ~/.config/google-chrome
+
+      # base directory for flatpak packages (linux only)
+      flat: ~/.var/app/com.google.Chrome/config/google-chrome
+
+    darwin:
+      base_dir: ~/Library/Application Support/Google/Chrome
+
+  chromium:
+    linux:
+      base_dir: ~/.config/chromium
+
+      # base directory for snap packages (linux only)
+      snap: ~/snap/chromium/common/chromium/
+      flat: ~/.var/app/org.chromium.Chromium/config/chromium
+
+    darwin:
+      base_dir: ~/Library/Application Support/chromium
+
+  brave:
+    linux:
+      base_dir: ~/.config/BraveSoftware/Brave-Browser
+      snap: ~/snap/brave/current/.config/BraveSoftware/Brave-Browser
+      flat: ~/.var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser
+    darwin:
+      base_dir: ~/Library/Application Support/BraveSoftware/Brave-Browser
+    
+
+#mozilla based browsers
+mozilla:
+  firefox:
+    linux:
+      base_dir: ~/.mozilla/firefox
+      snap: ~/snap/firefox/common/.mozilla/firefox
+      flat: ~/.var/app/org.mozilla.firefox/.mozilla/firefox
+    darwin:
+      base_dir: ~/Library/Application Support/Firefox
+  librewolf:
+    linux:
+      base_dir: ~/.librewolf
+      flat: ~/.var/app/io.gitlab.librewolf-community/.librewolf
+    darwin:
+      base_dir: ~/Library/Application Support/Librewolf
+  waterfox:
+    linux:
+      base_dir: ~/.waterfox
+      flat: ~/.var/app/net.waterfox.waterfox/.waterfox
+
+
+
+# other browsers with full BrowserDef definition
+# Format:
+# ```
+# other:
+#   family:
+#     flavour: # name is used as flavour
+#       linux:
+#       darwin:
+# ```
+other:
+
+  # browser family: this should have an equivalent existing BrowserFamily constant
+  qutebrowser:
+    qutebrowser: # flavour
+      linux: # platform
+        base_dir: ~/.config/qutebrowser

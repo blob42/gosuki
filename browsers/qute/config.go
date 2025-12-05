@@ -28,7 +28,7 @@ import (
 	"github.com/blob42/gosuki/pkg/modules"
 )
 
-var QuteBrowser = browsers.QuteBrowser
+var QuteBrowser = browsers.Defined(browsers.Qutebrowser)["qutebrowser"]
 
 const (
 	BrowserName    = "qutebrowser"
@@ -48,7 +48,7 @@ type QuteConfig struct {
 
 func NewQuteConfig() *QuteConfig {
 
-	baseDir := QuteBrowser.BaseDir()
+	baseDir := QuteBrowser.GetBaseDir()
 
 	config := &QuteConfig{
 		quickmarksPath: baseDir + "/quickmarks",

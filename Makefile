@@ -32,6 +32,8 @@ ifdef CI
    TAGS += ci
 endif
 
+BROWSER_PLATFORMS := linux darwin
+BROWSER_DEFS := $(foreach os,$(BROWSER_PLATFORMS),pkg/browsers/defined_browsers_$(os).go)
 
 # TODO: remove, needed for testing mvsqlite
 # SQLITE3_SHARED_TAGS := $(TAGS) libsqlite3
@@ -42,14 +44,12 @@ endif
 
 # shared: TAGS = $(SQLITE3_SHARED_TAGS)
 
-
 .PHONY: all
 all: prepare build
 
 .PHONY: prepare
 prepare:
 	@mkdir -p build
-
 
 
 SED_IN_PLACE = sed -i 
@@ -59,22 +59,24 @@ endif
 
 release_logging = $(SED_IN_PLACE) 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
 
+
 .PHONY: build
 build: sanitize $(foreach target,$(TARGETS),build/$(target)) 
 
+
 .PHONY: sanitize
-sanitize:
+sanitize: 
 	$(call release_logging)
 
 
-build/%: $(SRC)
+build/%: $(BROWSER_DEFS) $(SRC)
 	$(GOBUILD) -tags "$(TAGS)" -o build/$* $(BUILD_FLAGS) ./cmd/$*
-
 
 
 .PHONY: release
 release: BUILD_FLAGS = $(RELEASE_LDFLAGS)
 release: build
+
 
 .PHONY: debug
 debug: 
@@ -83,13 +85,28 @@ debug:
 	dlv debug --headless --listen 127.0.0.1:38697 ./cmd/gosuki -- \
 		-c /tmp/gosuki.conf.temp \
 		--db=/tmp/gosuki.db.tmp start
+
+
 .PHONY: docs
 	@gomarkdoc -u ./... > docs/API.md
 
 
-.PHONY: genimports
-genimports: 
+# Generate everything
+.PHONY: gen
+gen: 
 	@go generate ./...
+
+
+$(BROWSER_DEFS) &:
+	@go generate ./pkg/browsers
+
+
+.PHONY: genmods
+genmods: mods/generated_imports.go
+
+MOD_ASSETS = $(shell find mods -type f -name '*.go')
+mods/generated_imports.go: mods
+	@go generate ./mods
 
 # Distribution packaging
 ARCH := x86_64
@@ -109,12 +126,14 @@ ifeq (, $(shell which gotestsum))
 endif
 	gotestsum -f dots-v2 $(TEST_FLAGS) . ./...
 
+
 .PHONY: ci-test
 ci-test:
 ifeq (, $(shell which gotestsum))
 	$(GOINSTALL) gotest.tools/gotestsum@latest
 endif
 	gotestsum -f github-actions $(TEST_FLAGS) . ./...
+
 
 .PHONY: test
 test:
@@ -125,6 +144,8 @@ test:
 clean:
 	rm -rf build dist
 	rm -f contrib/*.completion
+	rm -f **/**/defined_*.go
+
 
 .PHONY: bundle-macos
 bundle-macos: release
@@ -173,4 +194,3 @@ contrib/%.completions:
 	$(eval bin=$(shell target='$*'; echo "$${target%-*}"))
 	$(eval type=$(shell target='$*'; echo "$${target#*-}"))
 	@go run -tags ci ./cmd/$(bin) -S completion $(type) > $@
-
