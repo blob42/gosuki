@@ -37,9 +37,12 @@ import (
 	  - Added version column to gskbookmarks table
 	  - Added node_id column to gskbookmarks table
 	  - Created sync_nodes table for node synchronization management
+  - Version 4: Added performance indexes:
+	  - Created idx_gskbookmarks_version_node_id composite index
+	    on gskbookmarks(version, node_id) for P2P sync change detection
 */
 
-const CurrentSchemaVersion = 3
+const CurrentSchemaVersion = 4
 
 const (
 
@@ -225,6 +228,11 @@ func checkDBVersion(db *DB) error {
 					return err
 				}
 				version = 3
+			case 3:
+				if err = db.migrateToVersion4(); err != nil {
+					return err
+				}
+				version = 4
 			}
 		}
 	}

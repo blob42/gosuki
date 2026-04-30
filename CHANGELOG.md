@@ -23,7 +23,8 @@ Now browsers can be defined in a simple Yaml file under `pkg/browsers/browsers.y
 
 ### Changed
 
-- **(security)* Listen on `127.0.0.1` by default
+- **(security)** Listen on `127.0.0.1` by default
+- upgraded to database schema v4: added composite index on `gskbookmarks(version, node_id)` for P2P sync change detection performance
 
 ### Fixed
 
