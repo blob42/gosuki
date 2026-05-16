@@ -61,7 +61,7 @@ release_logging = $(SED_IN_PLACE) 's/LoggingMode = .*/LoggingMode = Release/' pk
 
 
 .PHONY: build
-build: sanitize $(foreach target,$(TARGETS),build/$(target))
+build: $(foreach target,$(TARGETS),build/$(target))
 
 
 .PHONY: sanitize
@@ -75,7 +75,7 @@ build/%: $(BROWSER_DEFS) $(SRC)
 
 .PHONY: release
 release: BUILD_FLAGS = $(RELEASE_LDFLAGS)
-release: build
+release: sanitize build
 
 
 .PHONY: debug
