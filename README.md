@@ -44,7 +44,11 @@
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chromium_Logo.svg" width="30"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Brave-logo.svg" width="60"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://avatars.githubusercontent.com/u/165225155?s=200&v=4" width="30"></a>
+  <br>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://qutebrowser.org/icons/qutebrowser.svg" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/basilisk_hu_9d66460a001b2264.webp" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/palemoon_hu_926375eb54d69976.webp" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/icecat_hu_52ad98a42302fd41.webp" width="30"></a>
   <br>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/linux-gray?logo=linux"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/macOS-gray"></a>
