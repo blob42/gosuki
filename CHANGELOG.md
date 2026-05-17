@@ -28,6 +28,7 @@ Now browsers can be defined in a simple Yaml file under `pkg/browsers/browsers.y
 
 ### Fixed
 
+- Installing `gosuki` from source with `go install` (@kimjune01)
 - Ensure cleaning of residual temp files that can cumulate if gosuki is
 not restarted
 
