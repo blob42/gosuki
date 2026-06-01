@@ -5,6 +5,13 @@ package browsers
 
 var DefinedBrowsers = []BrowserDef{
 	{
+		"brave",
+		1,
+		"~/Library/Application Support/BraveSoftware/Brave-Browser",
+		"",
+		"",
+	},
+	{
 		"chrome",
 		1,
 		"~/Library/Application Support/Google/Chrome",
@@ -19,9 +26,16 @@ var DefinedBrowsers = []BrowserDef{
 		"",
 	},
 	{
-		"brave",
-		1,
-		"~/Library/Application Support/BraveSoftware/Brave-Browser",
+		"basilisk",
+		0,
+		"~/Library/Application Support/Basilisk",
+		"",
+		"",
+	},
+	{
+		"firefox",
+		0,
+		"~/Library/Application Support/Firefox",
 		"",
 		"",
 	},
@@ -33,13 +47,6 @@ var DefinedBrowsers = []BrowserDef{
 		"",
 	},
 	{
-		"zen",
-		0,
-		"~/Library/Application Support/zen",
-		"",
-		"",
-	},
-	{
 		"palemoon",
 		0,
 		"~/Library/Application Support/PaleMoon",
@@ -47,16 +54,9 @@ var DefinedBrowsers = []BrowserDef{
 		"",
 	},
 	{
-		"basilisk",
+		"zen",
 		0,
-		"~/Library/Application Support/Basilisk",
-		"",
-		"",
-	},
-	{
-		"firefox",
-		0,
-		"~/Library/Application Support/Firefox",
+		"~/Library/Application Support/zen",
 		"",
 		"",
 	},

@@ -1,55 +1,48 @@
 // Code generated DO NOT EDIT.
 
-//go:build freebsd
+//go:build windows
 package browsers
 
 var DefinedBrowsers = []BrowserDef{
 	{
+		"brave",
+		1,
+		"%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data",
+		"",
+		"",
+	},
+	{
 		"chrome",
 		1,
-		"~/.config/google-chrome",
+		"%LOCALAPPDATA%\\Google\\Chrome\\User Data",
 		"",
 		"",
 	},
 	{
 		"chromium",
 		1,
-		"~/.config/chromium",
+		"%LOCALAPPDATA%\\Chromium\\User Data",
 		"",
 		"",
 	},
 	{
-		"basilisk",
-		0,
-		"~/.basilisk",
+		"edge",
+		1,
+		"%LOCALAPPDATA%\\Microsoft\\Edge\\User Data",
 		"",
 		"",
 	},
 	{
 		"firefox",
 		0,
-		"~/.mozilla/firefox",
-		"",
-		"",
-	},
-	{
-		"librewolf",
-		0,
-		"~/.librewolf",
-		"",
-		"",
-	},
-	{
-		"palemoon",
-		0,
-		"~/.palemoon",
+		"%APPDATA%\\Mozilla\\Firefox",
 		"",
 		"",
 	},
 	{
 		"qutebrowser",
 		2,
-		"~/.config/qutebrowser",
+		"%APPDATA%\\qutebrowser",
 		"",
 		"",
 	},

@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"text/template"
 
@@ -90,8 +91,10 @@ func generateBrowserConfs(defFile string) (browserConfigs, error) {
 	bCfgs := make(map[platform][]browsers.BrowserDef)
 
 	// Chrome browsers
-	for flavour, platforms := range cfg.Chrome {
-		for p, pCfg := range platforms {
+	for _, flavour := range sortedStringKeys(cfg.Chrome) {
+		platforms := cfg.Chrome[flavour]
+		for _, p := range sortedStringKeys(platforms) {
+			pCfg := platforms[p]
 			bCfgs[platform(p)] = append(bCfgs[platform(p)], browsers.ChromeBrowser(
 				string(flavour),
 				pCfg.BaseDir,
@@ -101,8 +104,10 @@ func generateBrowserConfs(defFile string) (browserConfigs, error) {
 		}
 	}
 
-	for flavour, platforms := range cfg.Mozilla {
-		for p, pCfg := range platforms {
+	for _, flavour := range sortedStringKeys(cfg.Mozilla) {
+		platforms := cfg.Mozilla[flavour]
+		for _, p := range sortedStringKeys(platforms) {
+			pCfg := platforms[p]
 			if bCfgs[platform(p)] == nil {
 				bCfgs[platform(p)] = []browsers.BrowserDef{}
 			}
@@ -116,9 +121,12 @@ func generateBrowserConfs(defFile string) (browserConfigs, error) {
 	}
 
 	// Custom browser defs
-	for family, definitions := range cfg.Other {
-		for flavour, platforms := range definitions {
-			for p, pCfg := range platforms {
+	for _, family := range sortedFamilyKeys(cfg.Other) {
+		definitions := cfg.Other[family]
+		for _, flavour := range sortedStringKeys(definitions) {
+			platforms := definitions[flavour]
+			for _, p := range sortedStringKeys(platforms) {
+				pCfg := platforms[p]
 				bDef := browsers.BrowserDef{
 					Flavour:    string(flavour),
 					Family:     family,
@@ -138,6 +146,26 @@ func generateBrowserConfs(defFile string) (browserConfigs, error) {
 	return bCfgs, nil
 }
 
+// sortedStringKeys returns the keys of a string-keyed map in sorted order.
+func sortedStringKeys[K ~string, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return string(keys[i]) < string(keys[j]) })
+	return keys
+}
+
+// sortedFamilyKeys returns BrowserFamily keys in ascending numeric order.
+func sortedFamilyKeys[V any](m map[browsers.BrowserFamily]V) []browsers.BrowserFamily {
+	keys := make([]browsers.BrowserFamily, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return keys
+}
+
 // gostring escapes a string for use in a Go string literal (without surrounding quotes)
 func gostring(s string) string {
 	quoted := strconv.Quote(s)
@@ -154,7 +182,9 @@ func generateBrowserDefs(confs browserConfigs, relPath string) error {
 		"gostring": gostring,
 	}).Parse(base_tpl))
 
-	for platform, pConfs := range confs {
+	for _, p := range sortedStringKeys(confs) {
+		pConfs := confs[p]
+		platform := string(p)
 		var buf bytes.Buffer
 		tmpl.Execute(&buf, map[string]any{
 			"platform": platform,
