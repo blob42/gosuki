@@ -38,12 +38,12 @@ func ReduceEvents(interval time.Duration,
 	for {
 		select {
 		case <-eventsIn:
-			// log.Debug("[reducuer] received event, resetting watch interval !")
+			log.Trace("[reducuer] received event, resetting watch interval")
 			timer.Reset(interval)
 			events = append(events, true)
 
 		case <-beat:
-			// log.Debugf("reducer beat %s", watch.ID)
+			// log.Trace("reducer", "beat", watch.ID)
 
 		case <-timer.C:
 			if len(events) > 0 {

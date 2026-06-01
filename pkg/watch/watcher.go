@@ -324,17 +324,17 @@ watchloop:
 				}
 				for _, watchedEv := range watched.EventTypes {
 					for _, watchedName := range watched.EventNames {
-						log.Trace("event", "OP", event.Op, "eventName", event.Name)
+						log.Trace("watched event", "OP", event.Op, "name", event.Name)
 
 						if event.Op&watchedEv == watchedEv &&
 							(watchedName == "*" || event.Name == watchedName) {
+							log.Trace("captured event", "OP", event.Op, "name", event.Name)
 
 							// For watchers who use a reducer forward the event
 							// to the reducer channel
 							if watch.hasReducer() {
 								ch := watch.eventsChan
 								ch <- event
-
 								// the reducer will call Run()
 							} else {
 								go func() {
@@ -351,7 +351,6 @@ watchloop:
 								}()
 							}
 
-							// log.Debug("event", event.Op, "eventName", event.Name)
 							if watched.ResetWatch {
 								log.Debugf("resetting watchers")
 								if r, ok := w.(ResetWatcher); ok {
