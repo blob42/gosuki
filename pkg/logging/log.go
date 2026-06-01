@@ -75,10 +75,8 @@ const (
 )
 
 var (
-	//RELEASE: Change to Release for release mode
-	LoggingMode = Dev
-	TUIMode     bool
-	SilentMode  bool
+	TUIMode    bool
+	SilentMode bool
 )
 
 var (

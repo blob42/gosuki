@@ -52,21 +52,8 @@ prepare:
 	@mkdir -p build
 
 
-SED_IN_PLACE = sed -i ''
-ifeq ($(OS), linux)
-	SED_IN_PLACE = sed -i
-endif
-
-release_logging = $(SED_IN_PLACE) 's/LoggingMode = .*/LoggingMode = Release/' pkg/logging/log.go
-
-
 .PHONY: build
 build: $(foreach target,$(TARGETS),build/$(target))
-
-
-.PHONY: sanitize
-sanitize: 
-	$(call release_logging)
 
 
 build/%: $(BROWSER_DEFS) $(SRC)
@@ -74,8 +61,9 @@ build/%: $(BROWSER_DEFS) $(SRC)
 
 
 .PHONY: release
+release: TAGS += release
 release: BUILD_FLAGS = $(RELEASE_LDFLAGS)
-release: sanitize build
+release: build
 
 
 .PHONY: debug
