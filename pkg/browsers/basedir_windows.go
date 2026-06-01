@@ -20,7 +20,7 @@
 //  along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//go:build linux
+//go:build windows
 
 package browsers
 
@@ -28,55 +28,12 @@ import (
 	"github.com/blob42/gosuki/internal/utils"
 )
 
-const (
-	Flatpak = "flat"
-	Snap    = "snap"
-)
-
-// expands to the full path to the base directory
-// if the package is a snap, use the snap directory
-// func (p BaseDir) Expand() (string, error) {
-// 	return utils.ExpandPath(p.Dir)
-// }
-
 // base directory without normalization
 func (b BrowserDef) GetBaseDir() string {
-	if b.FlatpakDir != "" && isValidDir(b.FlatpakDir, Flatpak) {
-		return b.FlatpakDir
-	}
-	if b.SnapDir != "" && isValidDir(b.SnapDir, Snap) {
-		return b.SnapDir
-	}
 	return b.BaseDir
 }
 
 // Expands to the full path of base directory
-// If browser installed as snap or flatpak, expand to respective base dir
 func (b BrowserDef) ExpandBaseDir() (string, error) {
-	if b.FlatpakDir != "" && isValidDir(b.FlatpakDir, Flatpak) {
-		return utils.ExpandPath(b.FlatpakDir)
-	}
-	if b.SnapDir != "" && isValidDir(b.SnapDir, Snap) {
-		return utils.ExpandPath(b.SnapDir)
-	}
-	return utils.ExpandPath(b.BaseDir)
-}
-
-// detects whether path is a snap directory
-func isValidDir(dir string, ptype string) bool {
-	if dir == "" {
-		return false
-	}
-
-	normDir, err := utils.ExpandOnly(dir)
-	if err != nil {
-		log.Errorf("%s path: %s", ptype, err)
-		return false
-	}
-
-	ok, err := utils.DirExists(normDir)
-	if err != nil {
-		log.Debugf("%s path: %s : %s", ptype, dir, err)
-	}
-	return ok
+	return utils.ExpandPath(utils.ExpandWinEnv((b.BaseDir)))
 }

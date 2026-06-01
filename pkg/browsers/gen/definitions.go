@@ -25,9 +25,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
+	"strconv"
+	"text/template"
 
 	"gopkg.in/yaml.v3"
 
@@ -44,9 +45,9 @@ var DefinedBrowsers = []BrowserDef{
 	{
 		"{{.Flavour}}",
 		{{.Family}},
-		"{{printf "%s" .BaseDir}}",
-		"{{printf "%s" .SnapDir}}",
-		"{{printf "%s" .FlatpakDir}}",
+		"{{.BaseDir | gostring}}",
+		"{{.SnapDir | gostring}}",
+		"{{.FlatpakDir | gostring}}",
 	},{{ end }}
 }
 
@@ -137,11 +138,21 @@ func generateBrowserConfs(defFile string) (browserConfigs, error) {
 	return bCfgs, nil
 }
 
+// gostring escapes a string for use in a Go string literal (without surrounding quotes)
+func gostring(s string) string {
+	quoted := strconv.Quote(s)
+	// strconv.Quote adds surrounding double quotes; strip them
+	// since the template already provides the quotes
+	return quoted[1 : len(quoted)-1]
+}
+
 func generateBrowserDefs(confs browserConfigs, relPath string) error {
 	var err error
 	// pretty.Println(confs)
 
-	tmpl := template.Must(template.New("browser_defs").Parse(base_tpl))
+	tmpl := template.Must(template.New("browser_defs").Funcs(template.FuncMap{
+		"gostring": gostring,
+	}).Parse(base_tpl))
 
 	for platform, pConfs := range confs {
 		var buf bytes.Buffer

@@ -13,6 +13,9 @@ chrome:
     darwin:
       base_dir: ~/Library/Application Support/Google/Chrome
 
+    windows:
+      base_dir: "%LOCALAPPDATA%\\Google\\Chrome\\User Data"
+
     freebsd:
       base_dir: ~/.config/google-chrome
     netbsd:
@@ -33,6 +36,9 @@ chrome:
     darwin:
       base_dir: ~/Library/Application Support/chromium
 
+    windows:
+      base_dir: "%LOCALAPPDATA%\\Chromium\\User Data"
+
     netbsd:
       base_dir: ~/.config/chromium
     freebsd:
@@ -48,7 +54,12 @@ chrome:
       flat: ~/.var/app/com.brave.Browser/config/BraveSoftware/Brave-Browser
     darwin:
       base_dir: ~/Library/Application Support/BraveSoftware/Brave-Browser
-    
+    windows:
+      base_dir: "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data"
+
+  edge:
+    windows:
+      base_dir: "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data"
 
 #mozilla based browsers
 mozilla:
@@ -59,6 +70,8 @@ mozilla:
       flat: ~/.var/app/org.mozilla.firefox/.mozilla/firefox
     darwin:
       base_dir: ~/Library/Application Support/Firefox
+    windows:
+      base_dir: "%APPDATA%\\Mozilla\\Firefox"
     netbsd:
       base_dir: ~/.mozilla/firefox
     freebsd:
@@ -129,6 +142,8 @@ other:
     qutebrowser: # flavour
       linux: # platform
         base_dir: ~/.config/qutebrowser
+      windows:
+        base_dir: "%APPDATA%\\qutebrowser"
       netbsd:
         base_dir: ~/.config/qutebrowser
       freebsd:
