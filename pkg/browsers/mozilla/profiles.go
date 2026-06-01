@@ -46,7 +46,7 @@ type BrowserDef = browsers.BrowserDef
 
 var (
 	log           = logging.GetLogger("mozilla")
-	ReIniProfiles = regexp.MustCompile(`(?i)profile`)
+	ReIniProfiles = regexp.MustCompile(`(?i)^profile`)
 
 	ErrProfilesIni      = errors.New("could not parse profiles.ini file")
 	ErrNoDefaultProfile = errors.New("no default profile found")
