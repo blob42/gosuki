@@ -25,7 +25,6 @@ import (
 	"bufio"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/blob42/gosuki/pkg/logging"
@@ -70,9 +69,7 @@ func CopyFilesToTmpFolder(srcglob string, dst string) error {
 	}
 
 	for _, v := range matches {
-		dstFile := path.Join(dst, path.Base(v))
-		err = CopyFileToDst(v, dstFile)
-		if err != nil {
+		if err := CopyFileToDst(v, filepath.Join(dst, filepath.Base(v))); err != nil {
 			return err
 		}
 
