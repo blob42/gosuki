@@ -82,6 +82,7 @@ debug:
 # Generate everything
 .PHONY: gen
 gen: 
+	rm -f mods/generated_imports.go
 	@go generate ./...
 
 
@@ -134,6 +135,7 @@ clean:
 	rm -f contrib/*.completion
 	rm -f **/**/defined_*.go
 	rm -f __debug_bin*
+	rm -f mods/generated_imports.go
 
 
 .PHONY: bundle-macos
