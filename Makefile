@@ -186,7 +186,6 @@ debug:
 # Generate everything
 .PHONY: gen
 gen: 
-	rm -f mods/generated_imports.go
 	@go generate ./...
 
 
@@ -199,7 +198,6 @@ genmods: mods/generated_imports.go
 
 MOD_ASSETS = $(shell find mods -type f -name '*.go')
 mods/generated_imports.go: mods
-	rm -f mods/generated_imports.go
 	@go generate ./mods
 
 # Distribution packaging
@@ -240,7 +238,6 @@ clean:
 	rm -f contrib/*.completion
 	rm -f **/**/defined_*.go
 	rm -f __debug_bin*
-	rm -f mods/generated_imports.go
 
 
 .PHONY: bundle-macos
