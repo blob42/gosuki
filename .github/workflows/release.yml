@@ -13,20 +13,19 @@ jobs:
     strategy:
       # https://gist.github.com/asukakenji/f15ba7e588ac42795f421b48b8aede63
       matrix:
-        arch: [amd64, arm64, 386]
-        os: [linux, darwin]
+        arch: [amd64, 386]
+        os: [linux, windows]
         include:
           - os: linux
             runs_on: ubuntu-latest
+          - os: windows
+            runs_on: ubuntu-latest
           - os: darwin
+            arch: amd64
             runs_on: macos-latest
-
         exclude:
-          - os: linux
-            arch: arm64
           - os: darwin
             arch: 386
-
 
     runs-on: ${{ matrix.runs_on }}
     env:
@@ -89,6 +88,15 @@ jobs:
       run: |
           sudo apt install -y gcc-multilib g++-multilib
 
+    - name: Install Zig (for cross-compile)
+      if: matrix.os == 'windows'
+      run: |
+        ZIG_VERSION=0.16.0
+        ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/zig-x86_64-linux-$ZIG_VERSION.tar.xz"
+        mkdir -p ~/tools && cd ~/tools
+        curl -L "$ZIG_URL" | tar -xJ
+        echo "$HOME/tools/zig-x86_64-linux-$ZIG_VERSION" >> $GITHUB_PATH
+
     - name: Build
       run: |
         set -euo pipefail
@@ -103,6 +111,9 @@ jobs:
             ;;
           linux)
             make SYSTRAY=true release
+            ;;
+          windows)
+            make cross-windows-amd64
             ;;
           *)
             echo "Unsupported OS: ${{ matrix.os }}"

@@ -20,5 +20,5 @@
 //  along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//go:generate go run ../generate/imports.go
+//go:generate bash ../generate/gen-imports.sh
 package mods

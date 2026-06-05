@@ -20,7 +20,7 @@
 //  along with gosuki.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//go:generate go run ./gen browsers.yaml
+//go:generate go run -tags silent ./gen browsers.yaml
 package browsers
 
 import (

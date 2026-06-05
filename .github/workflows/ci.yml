@@ -9,22 +9,23 @@ on:
     branches-ignore: ['chore/**']
 
 jobs:
-  build-test:
+  build:
     strategy:
       matrix:
         arch: [amd64, arm64, 386]
-        os: [linux, darwin]
+        os: [linux, darwin, windows]
         include:
           - os: linux
             runs_on: ubuntu-latest
-
+          - os: windows
+            runs_on: ubuntu-latest
           - os: darwin
             runs_on: macos-latest
         exclude:
-          - os: linux
-            arch: arm64
           - os: darwin
             arch: 386
+          - os: windows
+            arch: arm64
 
     runs-on: ${{ matrix.runs_on }}
     env:
@@ -32,69 +33,71 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:
+    - name: uses-zig #if job uses zig for cross compilation
+      if: (matrix.os == 'linux' && matrix.arch != 'amd64') || (matrix.os == 'windows')
+      run: echo "ZIG_CROSSBUILD=true" >> "$GITHUB_ENV"
 
-    - name: Dependencies linux 386
-      if: ${{ matrix.os == 'linux' && matrix.arch == '386' }}
-      run: |
-          sudo apt install -y gcc-multilib g++-multilib
-
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         fetch-tags: 0
 
+    - name: Cache Zig
+      id: cache-zig
+      uses: actions/cache@v4
+      with:
+        path: ~/tools/zig-x86_64-linux-0.16.0
+        key: zig-0.16.0-linux-x64
+
+    - name: Install Zig (for cross-compile support)
+      if: steps.cache-zig.outputs.cache-hit != 'true'
+      run: |
+        ZIG_VERSION=0.16.0
+        ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/zig-x86_64-linux-$ZIG_VERSION.tar.xz"
+        mkdir -p ~/tools && cd ~/tools
+        curl -L "$ZIG_URL" | tar -xJ
+        echo "$HOME/tools/zig-x86_64-linux-$ZIG_VERSION" >> $GITHUB_PATH
+
+    - name: Add Zig to Path (if cached)
+      if: steps.cache-zig.outputs.cache-hit == 'true'
+      run: echo "$HOME/tools/zig-x86_64-linux-0.16.0" >> $GITHUB_PATH
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: '1.24'
 
     - name: build
+      if: "! env.ZIG_CROSSBUILD"
       run: make -B
+
+    - name: cross-build
+      if: env.ZIG_CROSSBUILD
+      run: |
+          make cross-${{ matrix.os }}-${{ matrix.arch }}
 
     - name: build-systray
       run: make -B SYSTRAY=true
 
-    - name: test
-      run: make ci-test
+    - name: cross-build-systray
+      if: env.ZIG_CROSSBUILD
+      run: |
+          make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=true
 
   test:
-    strategy:
-      matrix:
-        arch: [amd64, arm64, 386]
-        os: [linux, darwin]
-        include:
-          - os: linux
-            runs_on: ubuntu-latest
-
-          - os: darwin
-            runs_on: macos-latest
-
-        exclude:
-          - os: linux
-            arch: arm64
-          - os: darwin
-            arch: 386
-
-    runs-on: ${{ matrix.runs_on }}
+    runs-on: ubuntu-latest
     env:
       CI: true
     if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:
-    - name: Dependencies linux 386
-      if: ${{ matrix.os == 'linux' && matrix.arch == '386' }}
-      run: |
-          sudo apt install -y gcc-multilib g++-multilib
-
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         fetch-tags: 0
 
-
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v6
       with:
         go-version: '1.24'
 

@@ -36,7 +36,8 @@ import (
 )
 
 var (
-	fModsDir = flag.String("mods", "mods", "path to mods dir")
+	fModsDir     = flag.String("mods", "mods", "path to mods dir")
+	generatePlus bool // set by imports_plus.go when built with -tags plus
 )
 
 func getGoMod() (string, error) {
@@ -57,12 +58,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %s", err)
 	}
+	// fmt.Println("module: ", module)
 
 	ctx := context.Background()
 	cfg := &packages.Config{
 		Mode:    0,
 		Context: ctx,
 	}
+	// pkg, err := packages.Load(cfg, module+"/mods/importer")
+	// if err != nil {
+	// 	log.Fatalf("error: %w", err)
+	// }
+	// pretty.Print(pkg)
 
 	disabledRe := regexp.MustCompile(`\.disabled$`)
 
@@ -77,6 +84,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if err = file.Truncate(0); err != nil {
+		log.Fatal(err)
+	}
 
 	header := `package mods
 
@@ -85,11 +95,14 @@ import (
 	println("Generating module imports...")
 	fmt.Fprint(file, header)
 	err = filepath.WalkDir(targetPrefix, func(path string, d fs.DirEntry, err error) error {
+		// fmt.Printf("%#v\n", path)
+		// fmt.Printf("%#v\n", targetPrefix)
 
 		if path == targetPrefix {
 			return nil
 		}
 
+		// pretty.Print(d)
 		if err != nil {
 			return err
 		}
@@ -97,12 +110,20 @@ import (
 			return nil
 		}
 
-		// skip disbaled modules
+		// skip disabled modules
 		if disabledRe.Match([]byte(d.Name())) {
 			return filepath.SkipDir
 		}
 
+		// skip gosuki+ modules unless built with -tags plus
+		if !generatePlus {
+			if _, err := os.Stat(filepath.Join(path, ".private")); err == nil {
+				return filepath.SkipDir
+			}
+		}
+
 		rel, _ := filepath.Rel(path, targetPrefix)
+		// fmt.Println("rel ", rel)
 		if rel != ".." {
 			return filepath.SkipDir
 		}
@@ -117,6 +138,7 @@ import (
 		}
 
 		for _, pkg := range pkgs {
+			// pretty.Print(pkg)
 			fmt.Fprintf(file, "\t_ \"%s\"\n", pkg.ID)
 			fmt.Printf("\t_ \"%s\"\n", pkg.ID)
 		}

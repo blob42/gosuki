@@ -12,6 +12,58 @@ COMPLETION_TARGETS := $(foreach target,$(TARGETS),$(foreach type, $(COMPLETIONS)
 
 VERSION := $(shell git describe --tags --dirty 2>/dev/null || echo "unknown")
 
+# Cross-compilation support via Zig (for CGO targets: go-sqlite3)
+ZIG    := $(shell which zig 2>/dev/null)
+ZIG_OK := $(if $(ZIG),ok,missing)
+
+# Zig installation helper
+# Fetches latest version from https://ziglang.org/download/index.json
+ZIG_LATEST_VERSION = $(shell curl -sf https://ziglang.org/download/index.json | jq -r 'keys | map(select(. != "master")) | sort_by(split(".") | map(tonumber)) | last')
+ZIG_INSTALL_DIR    := $(HOME)/.local/share/zig
+ZIG_BIN_DIR        := $(ZIG_INSTALL_DIR)/latest
+ZIG_ARCH           := x86_64
+
+ifeq ($(ZIG_OK),missing)
+$(info WARNING: zig not found in PATH. Cross-compile targets require zig.)
+endif
+
+#.PHONY: install-zig-linux install-zig-windows install-zig-macos
+# Pattern target: install-zig-{linux,windows,macos}
+# Downloads latest stable Zig release and installs to $(ZIG_INSTALL_DIR)
+# Usage: make install-zig-linux
+install-zig-%:
+	@echo "==> Installing Zig for $*"
+	@ZIG_VER=$(ZIG_LATEST_VERSION); \
+	if [ -z "$$ZIG_VER" ]; then echo "ERROR: Could not fetch latest Zig version from https://ziglang.org/download/index.json"; exit 1; fi; \
+	echo "==> Latest Zig version: $$ZIG_VER"; \
+	mkdir -p $(ZIG_INSTALL_DIR); \
+	if [ "$*" = "windows" ]; then \
+		URL="https://ziglang.org/download/$$ZIG_VER/zig-$(ZIG_ARCH)-windows-$$ZIG_VER.zip"; \
+		EXT="zip"; \
+	else \
+		URL="https://ziglang.org/download/$$ZIG_VER/zig-$(ZIG_ARCH)-$*-$$ZIG_VER.tar.xz"; \
+		EXT="tar.xz"; \
+	fi; \
+	echo "==> Downloading from: $$URL"; \
+	echo "==> Downloading to: /tmp/zig-$$ZIG_VER.$$EXT"; \
+	curl -C - -L -o /tmp/zig-$$ZIG_VER.$$EXT "$$URL"; \
+	if [ "$$EXT" = "zip" ]; then \
+		unzip -o /tmp/zig-$$ZIG_VER.$$EXT -d /tmp/ >/dev/null; \
+	else \
+		tar -xf /tmp/zig-$$ZIG_VER.$$EXT -C /tmp/ >?dev/null; \
+	fi; \
+	ZIG_DIR="zig-$(ZIG_ARCH)-$*-$$ZIG_VER"; \
+	if [ -d "$(ZIG_INSTALL_DIR)/$$ZIG_VER" ]; then \
+		echo "==> Zig $$ZIG_VER already installed, skipping"; \
+	else \
+		mv /tmp/$$ZIG_DIR $(ZIG_INSTALL_DIR)/$$ZIG_VER; \
+		ln -sfn $(ZIG_INSTALL_DIR)/$$ZIG_VER $(ZIG_BIN_DIR); \
+		echo "==> Installed to $(ZIG_INSTALL_DIR)/$$ZIG_VER"; \
+	fi; \
+	
+	@echo "==> Add to PATH: export PATH=$(ZIG_BIN_DIR):\$${PATH}"
+
+
 make_ldflags = $(1) -X $(PKG)/pkg/build.Describe=$(VERSION)
 #https://go.dev/doc/gdb
 # disable gc optimizations
@@ -23,7 +75,8 @@ RELEASE_LDFLAGS := -ldflags "$(call make_ldflags, -s -w -buildid=)"
 
 BUILD_FLAGS = $(DEV_GCFLAGS) $(DEV_LDFLAGS)
 
-TAGS := $(OS) $(shell go env GOARCH)
+TARGET_TAGS := $(shell go env GOOS) $(shell go env GOARCH)
+TAGS:=
 ifdef SYSTRAY
     TAGS += systray
 endif
@@ -32,7 +85,7 @@ ifdef CI
    TAGS += ci
 endif
 
-BROWSER_PLATFORMS := linux darwin freebsd netbsd openbsd
+BROWSER_PLATFORMS := linux darwin freebsd netbsd openbsd windows
 BROWSER_DEFS := $(foreach os,$(BROWSER_PLATFORMS),pkg/browsers/defined_browsers_$(os).go)
 
 # TODO: remove, needed for testing mvsqlite
@@ -57,13 +110,64 @@ build: $(foreach target,$(TARGETS),build/$(target))
 
 
 build/%: $(BROWSER_DEFS) $(SRC)
-	$(GOBUILD) -tags "$(TAGS)" -o build/$* $(BUILD_FLAGS) ./cmd/$*
-
+	$(GOBUILD) -tags "$(TAGS) $(TARGET_TAGS)" -o build/$* $(BUILD_FLAGS) ./cmd/$*
 
 .PHONY: release
 release: TAGS += release
 release: BUILD_FLAGS = $(RELEASE_LDFLAGS)
 release: build
+
+# Cross-compilation targets (requires zig in PATH)
+# Uses per-target $(eval export ...) to scope env vars and prevent leakage.
+.PHONY: cross-windows-amd64 cross-windows-386 cross-linux-386 cross-linux-arm64 cross-all
+
+
+cross-windows-amd64: $(BROWSER_DEFS)
+	$(eval export CC=zig cc -target x86_64-windows-gnu)
+	$(eval export CGO_ENABLED=1)
+	$(eval export GOOS=windows)
+	$(eval export GOARCH=amd64)
+
+	@echo "==> Building gosuki.exe (windows/amd64)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki.exe $(BUILD_FLAGS) ./cmd/gosuki/
+
+	@echo "==> Building suki.exe (windows/amd64)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/suki.exe $(BUILD_FLAGS) ./cmd/suki/
+
+cross-windows-386: $(BROWSER_DEFS)
+	$(eval export CC=zig cc -target x86-windows-gnu)
+	$(eval export CGO_ENABLED=1)
+	$(eval export GOOS=windows)
+	$(eval export GOARCH=386)
+
+	@echo "==> Building gosuki-386.exe (windows/386)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki-386.exe $(BUILD_FLAGS) ./cmd/gosuki/
+	@echo "==> Building suki-386.exe (windows/386)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/suki-386.exe $(BUILD_FLAGS) ./cmd/suki/
+
+cross-linux-386: $(BROWSER_DEFS)
+	$(eval export CC=zig cc -target x86-linux-gnu)
+	$(eval export CGO_ENABLED=1)
+	$(eval export GOOS=linux)
+	$(eval export GOARCH=386)
+
+	@echo "==> Building gosuki-386 (linux/386)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki-386 $(BUILD_FLAGS) ./cmd/gosuki/
+	@echo "==> Building suki-386 (linux/386)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/suki-386 $(BUILD_FLAGS) ./cmd/suki/
+
+cross-linux-arm64: $(BROWSER_DEFS)
+	$(eval export CC=zig cc -target aarch64-linux-gnu)
+	$(eval export CGO_ENABLED=1)
+	$(eval export GOOS=linux)
+	$(eval export GOARCH=arm64)
+
+	@echo "==> Building gosuki-arm64 (linux/arm64)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/gosuki-arm64 $(BUILD_FLAGS) ./cmd/gosuki/
+	@echo "==> Building suki-arm64 (linux/arm64)"
+	$(GOBUILD) -tags "$(TAGS)" -o build/suki-arm64 $(BUILD_FLAGS) ./cmd/suki/
+
+cross-all: cross-windows-amd64 cross-windows-386 cross-linux-386 cross-linux-arm64
 
 
 .PHONY: debug
@@ -95,6 +199,7 @@ genmods: mods/generated_imports.go
 
 MOD_ASSETS = $(shell find mods -type f -name '*.go')
 mods/generated_imports.go: mods
+	rm -f mods/generated_imports.go
 	@go generate ./mods
 
 # Distribution packaging
