@@ -5,3 +5,4 @@ internal/gui/icon/gosuki-icon-132.png filter=lfs diff=lfs merge=lfs -text
 internal/gui/icon/gosuki-icon.png filter=lfs diff=lfs merge=lfs -text
 internal/gui/icon/icon.png filter=lfs diff=lfs merge=lfs -text
 internal/gui/icon/icon_32x32.png filter=lfs diff=lfs merge=lfs -text
+internal/gui/icon/gosuki-icon.ico filter=lfs diff=lfs merge=lfs -text
