@@ -44,7 +44,7 @@ jobs:
 
     - name: Cache Zig
       id: cache-zig
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/tools/zig-x86_64-linux-0.16.0
         key: zig-0.16.0-linux-x64
