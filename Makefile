@@ -231,6 +231,23 @@ endif
 test:
 	go test -v ./...
 
+.PHONY: cover
+cover:
+	@echo "==> Test coverage by package"
+	@GOSUKI_CLEAN_FILES=false go test -cover ./... 2>&1 | grep -E "^ok |^FAIL " | \
+		awk '{pkg=$$2; cov=""; for(i=1;i<=NF;i++) if($$i=="coverage:") cov=$$(i+1); if(pkg) printf "  %-50s %s\n", pkg, cov}'
+	@echo ""
+	@echo "==> Function coverage: queries.go"
+	@GOSUKI_CLEAN_FILES=false go test -coverprofile=/tmp/gosuki.cov ./internal/database/ >/dev/null 2>&1 && \
+		go tool cover -func=/tmp/gosuki.cov 2>/dev/null | grep "queries\.go"
+	@echo "==> Function coverage: api.go"
+	@GOSUKI_CLEAN_FILES=false go test -coverprofile=/tmp/gosuki.cov ./internal/api/ >/dev/null 2>&1 && \
+		go tool cover -func=/tmp/gosuki.cov 2>/dev/null | grep "api\.go"
+	@echo "==> Function coverage: commands.go"
+	@GOSUKI_CLEAN_FILES=false go test -coverprofile=/tmp/gosuki.cov ./cmd/suki/ >/dev/null 2>&1 && \
+		go tool cover -func=/tmp/gosuki.cov 2>/dev/null | grep "command"
+	@rm -f /tmp/gosuki.cov
+
 
 .PHONY: clean
 clean:
