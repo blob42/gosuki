@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [1.4.0] 2026-06-22
+
 ### Added
 
 - Windows platform support (build, file locking, base directories) — closes #13 #21
@@ -163,7 +165,8 @@ creatively named `schema_version`.
 
 Initial public release
 
-[unreleased]: https://github.com/blob42/gosuki/compare/v1.3.0...HEAD
+[unreleased]: https://github.com/blob42/gosuki/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/blob42/gosuki/releases/tag/v1.4.0
 [1.3.0]: https://github.com/blob42/gosuki/releases/tag/v1.3.0
 [1.2.1]: https://github.com/blob42/gosuki/releases/tag/v1.2.1
 [1.2.0]: https://github.com/blob42/gosuki/releases/tag/v1.2.0
