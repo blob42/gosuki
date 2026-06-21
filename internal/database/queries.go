@@ -50,8 +50,37 @@ const (
 )
 
 type PaginationParams struct {
-	Page int
-	Size int
+	Page    int
+	Size    int
+	SortBy  string // "modified", "title", "url" – empty means no ordering
+	SortAsc bool   // true=ASC, false=DESC (default)
+}
+
+// Valid sort fields for SQL injection prevention
+var validSortFields = map[string]bool{
+	"modified": true,
+	"title":    true,
+	"url":      true,
+}
+
+// buildOrderBy generates an ORDER BY clause from PaginationParams.
+// Returns empty string if SortBy is unset or invalid.
+func buildOrderBy(pagination *PaginationParams) string {
+	if pagination == nil || pagination.SortBy == "" {
+		return ""
+	}
+	if !validSortFields[pagination.SortBy] {
+		return ""
+	}
+	dir := "DESC"
+	if pagination.SortAsc {
+		dir = "ASC"
+	}
+	col := pagination.SortBy
+	if col == "title" {
+		col = "metadata" // internal column name
+	}
+	return fmt.Sprintf(" ORDER BY %s %s", col, dir)
 }
 
 type QueryResult struct {
@@ -60,7 +89,7 @@ type QueryResult struct {
 }
 
 func DefaultPagination() *PaginationParams {
-	return &PaginationParams{1, 50}
+	return &PaginationParams{Page: 1, Size: 50}
 }
 
 func QueryBookmarksByTag(
@@ -119,11 +148,12 @@ func QueryBookmarksByTags(
 	whereClause := buildWhereClauseForManyTags(query, tags, cond, fuzzy)
 	log.Trace(whereClause)
 
+	orderBy := buildOrderBy(pagination)
 	sqlQuery := fmt.Sprintf(
-		"SELECT URL, metadata, tags, module FROM gskbookmarks WHERE %s "+QQueryPaginate,
+		"SELECT URL, metadata, tags, module FROM gskbookmarks WHERE %s%s %s",
 		whereClause,
-		pagination.Size,
-		(pagination.Page-1)*pagination.Size,
+		orderBy,
+		QQueryPaginate,
 	)
 
 	rawBooks := RawBookmarks{}
@@ -189,7 +219,9 @@ func BookmarksByTag(
 	}
 
 	query = query + " (" + tagsCondition + ")"
-	query += fmt.Sprintf(" "+QQueryPaginate, pagination.Size, (pagination.Page-1)*pagination.Size)
+	orderBy := buildOrderBy(pagination)
+	query += fmt.Sprintf("%s %s", orderBy, QQueryPaginate)
+	query = fmt.Sprintf(query, pagination.Size, (pagination.Page-1)*pagination.Size)
 
 	rawBooks := RawBookmarks{}
 	err := DiskDB.Handle.SelectContext(ctx, &rawBooks, query)
@@ -251,7 +283,9 @@ func BookmarksByTags(
 	}
 
 	query = query + " (" + strings.Join(conditions, joinOperator) + ")"
-	query += fmt.Sprintf(" "+QQueryPaginate, pagination.Size, (pagination.Page-1)*pagination.Size)
+	orderBy := buildOrderBy(pagination)
+	query += fmt.Sprintf("%s %s", orderBy, QQueryPaginate)
+	query = fmt.Sprintf(query, pagination.Size, (pagination.Page-1)*pagination.Size)
 
 	rawBooks := RawBookmarks{}
 	err := DiskDB.Handle.SelectContext(ctx, &rawBooks, query)
@@ -275,13 +309,12 @@ func ListBookmarks(
 	pagination *PaginationParams,
 ) (*QueryResult, error) {
 	rawBooks := RawBookmarks{}
+	orderBy := buildOrderBy(pagination)
+	sqlQuery := fmt.Sprintf("SELECT * FROM gskbookmarks%s %s", orderBy, QQueryPaginate)
 	err := DiskDB.Handle.SelectContext(
 		ctx,
 		&rawBooks,
-		fmt.Sprintf("SELECT * FROM gskbookmarks LIMIT %d OFFSET %d",
-			pagination.Size,
-			(pagination.Page-1)*pagination.Size,
-		),
+		fmt.Sprintf(sqlQuery, pagination.Size, (pagination.Page-1)*pagination.Size),
 	)
 	if err != nil {
 		return nil, err
@@ -333,10 +366,12 @@ func buildSelectQuery(
 		WHERE 
 	`
 
+	orderBy := buildOrderBy(pagination)
 	sqlQuery := fmt.Sprintf(
-		"%s %s %s",
+		"%s %s%s %s",
 		sqlPrelude,
 		buildWhereClause(tag, fuzzy),
+		orderBy,
 		QQueryPaginate,
 	)
 

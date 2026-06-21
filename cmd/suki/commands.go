@@ -39,6 +39,27 @@ type searchOpts struct {
 	fuzzy bool
 }
 
+// parseSortFlag parses a sort flag value like "modified", "modified:asc", "modified:desc"
+// Returns (sortBy, sortAsc). Empty sortBy means no sorting.
+func parseSortFlag(sortStr string) (string, bool) {
+	if sortStr == "" {
+		return "", false
+	}
+	parts := strings.SplitN(sortStr, ":", 2)
+	field := strings.TrimSpace(parts[0])
+	if field == "" {
+		return "", false
+	}
+	if len(parts) == 2 {
+		dir := strings.ToLower(strings.TrimSpace(parts[1]))
+		if dir == "asc" {
+			return field, true
+		}
+	}
+	// Default direction is DESC
+	return field, false
+}
+
 var FuzzySearchCmd = &cli.Command{
 	Name:    "fuzzy",
 	Aliases: []string{"f"},
@@ -117,9 +138,12 @@ func formatPrint(_ context.Context, cmd *cli.Command, marks []*gosuki.Bookmark) 
 }
 
 func listBookmarks(ctx context.Context, cmd *cli.Command) error {
+	sortBy, sortAsc := parseSortFlag(cmd.String("sort"))
 	pageParms := db.PaginationParams{
-		Page: 1,
-		Size: -1,
+		Page:    1,
+		Size:    -1,
+		SortBy:  sortBy,
+		SortAsc: sortAsc,
 	}
 	result, err := db.ListBookmarks(ctx, &pageParms)
 	if err != nil {
@@ -140,9 +164,12 @@ func searchBookmarks(ctx context.Context, cmd *cli.Command, opts searchOpts, key
 	var result *db.QueryResult
 	var err error
 
+	sortBy, sortAsc := parseSortFlag(cmd.String("sort"))
 	pageParms := db.PaginationParams{
-		Page: 1,
-		Size: -1,
+		Page:    1,
+		Size:    -1,
+		SortBy:  sortBy,
+		SortAsc: sortAsc,
 	}
 
 	if len(query.Tags) > 0 {

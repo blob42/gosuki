@@ -102,6 +102,22 @@ suki s :OR debian linux
 \fB--format string, -f string\fR
 Format output using a custom template (see \fBOUTPUT FORMAT\fR)
 .TP
+\fB--sort value, -s value\fR
+Sort results by field. Supported values:
+.RS
+.IP \(bu 2
+\fBmodified\fR or \fBmodified:desc\fR – newest first (default direction)
+.IP \(bu 2
+\fBmodified:asc\fR – oldest first
+.IP \(bu 2
+\fBtitle[:asc|desc]\fR – sort by title
+.IP \(bu 2
+\fBurl[:asc|desc]\fR – sort by URL
+.RE
+.RS
+Without this flag, results are returned in insertion order.
+.RE
+.TP
 .B \-\-debug string 
 \fIsytanx\fR: <global-level>,<unit>=<level>
 .RS
@@ -145,6 +161,12 @@ For example:
 \fBsuki\fR \- Display all bookmarks in dmenu-compatible format
 .IP \(bu 2
 \fBsuki -f "[%T] %u\\n"\fR \- Show tags between \(lq[]\(rq and the bookmark url.
+.IP \(bu 2
+\fBsuki -s modified\fR \- List bookmarks sorted by modified date (newest first)
+.IP \(bu 2
+\fBsuki -s modified:asc\fR \- List bookmarks sorted by modified date (oldest first)
+.IP \(bu 2
+\fBsuki -s modified f term1 term2\fR \- Fuzzy search sorted by modified date
 .IP \(bu 2
 \fBsuki f term1 term2\fR \- Fuzzy search bookmarks with \(lqterm1 term2\(rq
 .IP \(bu 2

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `suki`: `--sort/-s` flag to sort results by `modified`, `title`, or `url` with optional `:asc`/`:desc` direction (e.g., `suki -s modified`, `suki -s title:asc`)
+- `suki`: sorting also available on search and fuzzy subcommands
 - Custom daemon listening address with `--listen` flag or `webui` config section
 - Distribution packages builds for Arch Linux and Debian
 - [webui]: search bar now allows toggling currently select tag filter

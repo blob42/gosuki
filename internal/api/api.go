@@ -61,6 +61,19 @@ func GetPaginationParams(r *http.Request) *db.PaginationParams {
 		}
 	}
 
+	// Parse sort parameter: "modified", "modified:asc", "modified:desc", etc.
+	if sortStr := r.URL.Query().Get("sort"); sortStr != "" {
+		parts := strings.SplitN(sortStr, ":", 2)
+		field := strings.TrimSpace(parts[0])
+		if field != "" {
+			pageParams.SortBy = field
+			if len(parts) == 2 {
+				dir := strings.ToLower(strings.TrimSpace(parts[1]))
+				pageParams.SortAsc = (dir == "asc")
+			}
+		}
+	}
+
 	return pageParams
 }
 

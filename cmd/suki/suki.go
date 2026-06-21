@@ -69,6 +69,12 @@ Usage examples:
 			Usage:   "Format output using a custom template",
 			Aliases: []string{"f"},
 		},
+		&cli.StringFlag{
+			Name:        "sort",
+			Aliases:     []string{"s"},
+			Usage:       "Sort results: modified[:asc|desc], title[:asc|desc], url[:asc|desc]",
+			DefaultText: "none (insertion order)",
+		},
 	}
 	app.Flags = append(app.Flags, cmd.MainFlags...)
 
