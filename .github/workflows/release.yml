@@ -23,9 +23,14 @@ jobs:
           - os: darwin
             arch: amd64
             runs_on: macos-latest
+          - os: linux
+            arch: arm64
+            runs_on: ubuntu-latest
         exclude:
           - os: darwin
             arch: 386
+          - os: windows
+            arch: arm64
 
     runs-on: ${{ matrix.runs_on }}
     env:
@@ -38,8 +43,12 @@ jobs:
       build-artifact: ${{ steps.package.outputs.release-name }}
 
     steps:
+    - name: uses-zig #if job uses zig for cross compilation
+      if: (matrix.os == 'linux' && matrix.arch != 'amd64') || (matrix.os == 'windows')
+      run: echo "ZIG_CROSSBUILD=true" >> "$GITHUB_ENV"
+
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         lfs: true
         fetch-depth: 0
@@ -67,29 +76,16 @@ jobs:
         # Debian revision: <upstream>-<debian-revision>
         echo "deb-version=${ver#v*}-1" >> $GITHUB_OUTPUT
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
+    - name: Cache Zig
+      id: cache-zig
+      if: runner.os == 'Linux'
+      uses: actions/cache@v5
       with:
-        go-version: '1.24'
+        path: ~/tools/zig-x86_64-linux-0.16.0
+        key: zig-0.16.0-linux-x64
 
-    - name: Pakcage Name
-      id: pkgname
-      run: |
-        echo "name=${GITHUB_REPOSITORY##*/}" >> $GITHUB_OUTPUT
-
-
-    - name: Dependencies linux
-      if: ${{ matrix.os == 'linux' }}
-      run: |
-        sudo apt install -y build-essential
-
-    - name: Dependencies linux 386
-      if: ${{ matrix.os == 'linux' && matrix.arch == '386' }}
-      run: |
-          sudo apt install -y gcc-multilib g++-multilib
-
-    - name: Install Zig (for cross-compile)
-      if: matrix.os == 'windows'
+    - name: Install Zig (for cross-compile support)
+      if: runner.os == 'Linux' && steps.cache-zig.outputs.cache-hit != 'true'
       run: |
         ZIG_VERSION=0.16.0
         ZIG_URL="https://ziglang.org/download/$ZIG_VERSION/zig-x86_64-linux-$ZIG_VERSION.tar.xz"
@@ -97,13 +93,27 @@ jobs:
         curl -L "$ZIG_URL" | tar -xJ
         echo "$HOME/tools/zig-x86_64-linux-$ZIG_VERSION" >> $GITHUB_PATH
 
+    - name: Add Zig to Path (if cached)
+      if: runner.os == 'Linux' && steps.cache-zig.outputs.cache-hit == 'true'
+      run: echo "$HOME/tools/zig-x86_64-linux-0.16.0" >> $GITHUB_PATH
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.26'
+
+    - name: Pakcage Name
+      id: pkgname
+      run: |
+        echo "name=${GITHUB_REPOSITORY##*/}" >> $GITHUB_OUTPUT
+
+
     - name: Build
+      if: "! env.ZIG_CROSSBUILD"
       run: |
         set -euo pipefail
 
-        make genimports
-        export CGO_ENABLED=1
-        export GOARCH="${{ matrix.arch }}"
+        make gen
 
         case "${{ matrix.os }}" in
           darwin)
@@ -112,8 +122,25 @@ jobs:
           linux)
             make SYSTRAY=true release
             ;;
+          *)
+            echo "Unsupported OS: ${{ matrix.os }}"
+            exit 1
+            ;;
+        esac
+
+    - name: Cross-build
+      if: env.ZIG_CROSSBUILD
+      run: |
+        set -euo pipefail
+
+        make gen
+
+        case "${{ matrix.os }}" in
+          linux)
+            make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=true
+            ;;
           windows)
-            make cross-windows-amd64
+            make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=true
             ;;
           *)
             echo "Unsupported OS: ${{ matrix.os }}"
@@ -211,6 +238,7 @@ jobs:
   debian-package:
     name: Debian Package
     strategy:
+      fail-fast: false
       matrix:
         arch: [amd64, 386, arm64]
     needs: release
@@ -219,14 +247,14 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
     - name: Download build artifacts
       uses: actions/download-artifact@v5
       with:
-        name: ${{ needs.release.outputs.build-artifact }}
+        name: ${{ needs.release.outputs.pkg-name }}-${{ needs.release.outputs.release-version }}-linux-${{ matrix.arch }}
         path: release
 
     - name: Build debian package
@@ -240,7 +268,22 @@ jobs:
           set -euo pipefail
 
           mkdir -p build
-          cp release/{gosuki,suki} build
+
+          # Cross-compiled binaries have arch suffixes; rename for build-deb.sh
+          case "${{ matrix.arch }}" in
+            amd64)
+              cp release/gosuki release/suki build/
+              ;;
+            386)
+              cp release/gosuki-386 build/gosuki
+              cp release/suki-386 build/suki
+              ;;
+            arm64)
+              cp release/gosuki-arm64 build/gosuki
+              cp release/suki-arm64 build/suki
+              ;;
+          esac
+
           cp release/contrib/completions/* contrib/
 
           # the built deb pacakage path is in outputs.deb-package
