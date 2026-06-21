@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Windows platform support (build, file locking, base directories) — closes #13 #21
+- Windows systray icon for system tray mode
+- marktab: strip action tags when processing hooks
 - `suki`: `--sort/-s` flag to sort results by `modified`, `title`, or `url` with optional `:asc`/`:desc` direction (e.g., `suki -s modified`, `suki -s title:asc`)
 - `suki`: sorting also available on search and fuzzy subcommands
 - API: `sort` query parameter on `/api/bookmarks` (e.g., `?sort=modified:asc`)
@@ -31,6 +34,8 @@ Now browsers can be defined in a simple Yaml file under `pkg/browsers/browsers.y
 
 ### Fixed
 
+- Database: `LIKE` query wildcards (`%`) consumed as format verbs, causing silent query failures
+- Mozilla `profiles.ini` parsing: profile sections not detected correctly
 - Installing `gosuki` from source with `go install` (@kimjune01)
 - Ensure cleaning of residual temp files that can cumulate if gosuki is
 not restarted
