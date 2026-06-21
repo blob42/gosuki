@@ -199,3 +199,234 @@ func TestListBookmarks_SortInvalidField(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 5, len(result.Bookmarks))
 }
+
+// --- DefaultPagination ---
+
+func TestDefaultPagination(t *testing.T) {
+	p := DefaultPagination()
+	require.Equal(t, 1, p.Page)
+	require.Equal(t, 50, p.Size)
+	require.Equal(t, "", p.SortBy)
+	require.False(t, p.SortAsc)
+}
+
+// --- buildWhereClause (pure function) ---
+
+func TestBuildWhereClause_NoTagNoFuzzy(t *testing.T) {
+	w := buildWhereClause("", false)
+	require.Contains(t, w, "URL like")
+	require.Contains(t, w, "metadata like")
+	require.Contains(t, w, "LOWER(tags) like")
+}
+
+func TestBuildWhereClause_TagNoFuzzy(t *testing.T) {
+	w := buildWhereClause("linux", false)
+	require.Contains(t, w, "URL LIKE")
+	require.Contains(t, w, "metadata LIKE")
+	require.Contains(t, w, "LOWER(tags) LIKE")
+}
+
+func TestBuildWhereClause_NoTagFuzzy(t *testing.T) {
+	w := buildWhereClause("", true)
+	require.Contains(t, w, "fuzzy(")
+}
+
+func TestBuildWhereClause_TagFuzzy(t *testing.T) {
+	w := buildWhereClause("linux", true)
+	require.Contains(t, w, "fuzzy(")
+	require.Contains(t, w, "LOWER(tags) LIKE")
+}
+
+// --- buildCountQuery (pure function) ---
+
+func TestBuildCountQuery_NoTag(t *testing.T) {
+	q := buildCountQuery("", false)
+	require.Contains(t, q, "SELECT COUNT(*)")
+	require.Contains(t, q, "gskbookmarks")
+	require.Contains(t, q, "LIMIT 1")
+}
+
+func TestBuildCountQuery_Tag(t *testing.T) {
+	q := buildCountQuery("linux", false)
+	require.Contains(t, q, "SELECT COUNT(*)")
+	require.Contains(t, q, "LOWER(tags) LIKE")
+}
+
+func TestBuildCountQuery_Fuzzy(t *testing.T) {
+	q := buildCountQuery("", true)
+	require.Contains(t, q, "fuzzy(")
+}
+
+// --- buildWhereClauseForManyTags (pure function) ---
+
+func TestBuildWhereClauseForManyTags_NoQuery(t *testing.T) {
+	w := buildWhereClauseForManyTags("", []string{"linux", "os"}, TagAnd, false)
+	require.Contains(t, w, "LOWER(tags) like '%linux%'")
+	require.Contains(t, w, "LOWER(tags) like '%os%'")
+	require.Contains(t, w, "AND")
+}
+
+func TestBuildWhereClauseForManyTags_WithQuery(t *testing.T) {
+	w := buildWhereClauseForManyTags("lang", []string{"programming"}, TagAnd, false)
+	require.Contains(t, w, "URL like '%lang%'")
+	require.Contains(t, w, "LOWER(tags) like '%programming%'")
+}
+
+func TestBuildWhereClauseForManyTags_OrCondition(t *testing.T) {
+	w := buildWhereClauseForManyTags("", []string{"linux", "os"}, TagOr, false)
+	require.Contains(t, w, "OR")
+	require.Contains(t, w, "LOWER(tags) like '%linux%'")
+	require.Contains(t, w, "LOWER(tags) like '%os%'")
+}
+
+func TestBuildWhereClauseForManyTags_Fuzzy(t *testing.T) {
+	w := buildWhereClauseForManyTags("", []string{"go"}, TagAnd, true)
+	require.Contains(t, w, "fuzzy('go', tags)")
+}
+
+// --- buildSelectQuery (pure function) ---
+
+func TestBuildSelectQuery_NoTag(t *testing.T) {
+	q := buildSelectQuery("test", false, "", DefaultPagination())
+	require.Contains(t, q, "SELECT URL, metadata, tags, module")
+	require.Contains(t, q, "gskbookmarks")
+	require.Contains(t, q, "URL like '%test%'")
+	require.Contains(t, q, "LIMIT")
+}
+
+func TestBuildSelectQuery_WithTag(t *testing.T) {
+	q := buildSelectQuery("test", false, "linux", DefaultPagination())
+	require.Contains(t, q, "URL LIKE '%test%'")
+	require.Contains(t, q, "LOWER(tags) LIKE '%linux%'")
+}
+
+func TestBuildSelectQuery_Fuzzy(t *testing.T) {
+	q := buildSelectQuery("test", true, "", DefaultPagination())
+	require.Contains(t, q, "fuzzy('test', URL)")
+}
+
+// --- QueryBookmarks (integration) ---
+
+func TestQueryBookmarks_ByTitle(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	result, err := QueryBookmarks(context.Background(), "Alpha", false, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Bookmarks))
+	require.Equal(t, "Alpha", result.Bookmarks[0].Title)
+	require.Equal(t, uint(1), result.Total)
+}
+
+func TestQueryBookmarks_ByURL(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	result, err := QueryBookmarks(context.Background(), "beta.com", false, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Bookmarks))
+	require.Equal(t, "Beta", result.Bookmarks[0].Title)
+}
+
+func TestQueryBookmarks_EmptyQuery(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := QueryBookmarks(context.Background(), "", false, DefaultPagination())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "empty")
+}
+
+func TestQueryBookmarks_Fuzzy(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	result, err := QueryBookmarks(context.Background(), "alph", true, DefaultPagination())
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(result.Bookmarks), 1)
+}
+
+// --- QueryBookmarksByTag (integration) ---
+// NOTE: QueryBookmarksByTag has a pre-existing fmt.Sprintf bug (same as above).
+// Only error-path tests are included until the bug is fixed.
+
+func TestQueryBookmarksByTag_EmptyQuery(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := QueryBookmarksByTag(context.Background(), "", "a", false, DefaultPagination())
+	require.Error(t, err)
+}
+
+func TestQueryBookmarksByTag_EmptyTag(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := QueryBookmarksByTag(context.Background(), "test", "", false, DefaultPagination())
+	require.Error(t, err)
+}
+
+func TestQueryBookmarksByTag_NilPagination(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := QueryBookmarksByTag(context.Background(), "test", "a", false, nil)
+	require.Error(t, err)
+}
+
+// --- QueryBookmarksByTags (integration) ---
+// NOTE: QueryBookmarksByTags has a pre-existing fmt.Sprintf bug: the WHERE
+// clause contains % wildcards that get consumed by Sprintf. Functional tests
+// are skipped until the bug is fixed in queries.go.
+
+func TestQueryBookmarksByTags_EmptyTags(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := QueryBookmarksByTags(context.Background(), "test", []string{}, TagAnd, false, DefaultPagination())
+	require.Error(t, err)
+}
+
+func TestQueryBookmarksByTags_NilPagination(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := QueryBookmarksByTags(context.Background(), "test", []string{"a"}, TagAnd, false, nil)
+	require.Error(t, err)
+}
+
+// --- BookmarksByTag (integration) ---
+// NOTE: BookmarksByTag has a pre-existing fmt.Sprintf bug: the query string
+// contains LIKE wildcards (%%) that get consumed by fmt.Sprintf.
+// Only error-path tests are included until the bug is fixed.
+
+func TestBookmarksByTag_EmptyTag(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := BookmarksByTag(context.Background(), "", DefaultPagination())
+	require.Error(t, err)
+}
+
+// --- BookmarksByTags (integration) ---
+// NOTE: BookmarksByTags has a pre-existing fmt.Sprintf bug (LIKE wildcards)
+// and crashes on nil pagination. Only error-path tests are included.
+
+func TestBookmarksByTags_EmptyTags(t *testing.T) {
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := BookmarksByTags(context.Background(), []string{}, TagAnd, DefaultPagination())
+	require.Error(t, err)
+}
