@@ -240,20 +240,20 @@ func TestBuildWhereClause_TagFuzzy(t *testing.T) {
 // --- buildCountQuery (pure function) ---
 
 func TestBuildCountQuery_NoTag(t *testing.T) {
-	q := buildCountQuery("", false)
+	q := buildCountQuery("", false, "test", "test")
 	require.Contains(t, q, "SELECT COUNT(*)")
 	require.Contains(t, q, "gskbookmarks")
 	require.Contains(t, q, "LIMIT 1")
 }
 
 func TestBuildCountQuery_Tag(t *testing.T) {
-	q := buildCountQuery("linux", false)
+	q := buildCountQuery("linux", false, "test", "linux")
 	require.Contains(t, q, "SELECT COUNT(*)")
 	require.Contains(t, q, "LOWER(tags) LIKE")
 }
 
 func TestBuildCountQuery_Fuzzy(t *testing.T) {
-	q := buildCountQuery("", true)
+	q := buildCountQuery("", true, "test", "test")
 	require.Contains(t, q, "fuzzy(")
 }
 
@@ -351,7 +351,6 @@ func TestQueryBookmarks_Fuzzy(t *testing.T) {
 }
 
 // --- QueryBookmarksByTag (integration) ---
-// NOTE: QueryBookmarksByTag has a pre-existing fmt.Sprintf bug (same as above).
 // Only error-path tests are included until the bug is fixed.
 
 func TestQueryBookmarksByTag_EmptyQuery(t *testing.T) {
@@ -382,7 +381,6 @@ func TestQueryBookmarksByTag_NilPagination(t *testing.T) {
 }
 
 // --- QueryBookmarksByTags (integration) ---
-// NOTE: QueryBookmarksByTags has a pre-existing fmt.Sprintf bug: the WHERE
 // clause contains % wildcards that get consumed by Sprintf. Functional tests
 // are skipped until the bug is fixed in queries.go.
 
@@ -405,7 +403,6 @@ func TestQueryBookmarksByTags_NilPagination(t *testing.T) {
 }
 
 // --- BookmarksByTag (integration) ---
-// NOTE: BookmarksByTag has a pre-existing fmt.Sprintf bug: the query string
 // contains LIKE wildcards (%%) that get consumed by fmt.Sprintf.
 // Only error-path tests are included until the bug is fixed.
 
@@ -419,7 +416,6 @@ func TestBookmarksByTag_EmptyTag(t *testing.T) {
 }
 
 // --- BookmarksByTags (integration) ---
-// NOTE: BookmarksByTags has a pre-existing fmt.Sprintf bug (LIKE wildcards)
 // and crashes on nil pagination. Only error-path tests are included.
 
 func TestBookmarksByTags_EmptyTags(t *testing.T) {
@@ -428,5 +424,114 @@ func TestBookmarksByTags_EmptyTags(t *testing.T) {
 	defer seedDB(t, db, fixtures.DefaultSeedSet())()
 
 	_, err := BookmarksByTags(context.Background(), []string{}, TagAnd, DefaultPagination())
+	require.Error(t, err)
+}
+
+func TestQueryBookmarksByTag_Match(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	result, err := QueryBookmarksByTag(context.Background(), "lang", "programming", false, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 2, len(result.Bookmarks))
+	require.Equal(t, uint(2), result.Total)
+}
+func TestQueryBookmarksByTag_NoMatch(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	result, err := QueryBookmarksByTag(context.Background(), "nonexistent", "a", false, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 0, len(result.Bookmarks))
+	require.Equal(t, uint(0), result.Total)
+}
+func TestQueryBookmarksByTags_And(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	// Linux (linux, os) and GNU (linux, gnu, os) both have "linux" AND "os"
+	result, err := QueryBookmarksByTags(context.Background(), "", []string{"linux", "os"}, TagAnd, false, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 2, len(result.Bookmarks))
+}
+func TestQueryBookmarksByTags_Or(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	// Linux and GNU both have "linux" or "os"
+	result, err := QueryBookmarksByTags(context.Background(), "", []string{"linux", "os"}, TagOr, false, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 2, len(result.Bookmarks))
+}
+func TestQueryBookmarksByTags_WithQuery(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	result, err := QueryBookmarksByTags(context.Background(), "Lang", []string{"programming"}, TagAnd, false, DefaultPagination())
+	require.NoError(t, err)
+	// "Lang" matches Go Lang and Rust Lang (both have programming tag)
+	require.Equal(t, 2, len(result.Bookmarks))
+}
+func TestBookmarksByTag_Match(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	result, err := BookmarksByTag(context.Background(), "programming", DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 3, len(result.Bookmarks))
+	require.Equal(t, uint(3), result.Total)
+}
+func TestBookmarksByTag_NoMatch(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	result, err := BookmarksByTag(context.Background(), "nonexistent", DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 0, len(result.Bookmarks))
+}
+func TestBookmarksByTags_And(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	// GNU has both "linux" and "gnu" tags
+	result, err := BookmarksByTags(context.Background(), []string{"linux", "gnu"}, TagAnd, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Bookmarks))
+	require.Equal(t, "GNU", result.Bookmarks[0].Title)
+}
+func TestBookmarksByTags_Or(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.TagVarietySet())()
+
+	// Linux (linux, os) and GNU (linux, gnu, os) match "linux" OR "os"
+	result, err := BookmarksByTags(context.Background(), []string{"linux", "os"}, TagOr, DefaultPagination())
+	require.NoError(t, err)
+	require.Equal(t, 2, len(result.Bookmarks))
+}
+func TestBookmarksByTags_NilPagination(t *testing.T) {
+	//
+	db, cleanup := newTestDB(t)
+	defer cleanup()
+	defer seedDB(t, db, fixtures.DefaultSeedSet())()
+
+	_, err := BookmarksByTags(context.Background(), []string{"a"}, TagAnd, nil)
 	require.Error(t, err)
 }
