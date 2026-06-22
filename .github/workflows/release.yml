@@ -137,10 +137,10 @@ jobs:
 
         case "${{ matrix.os }}" in
           linux)
-            make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=true
+            make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=1 RELEASE=1
             ;;
           windows)
-            make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=true
+            make cross-${{ matrix.os }}-${{ matrix.arch }} SYSTRAY=1 RELEASE=1
             ;;
           *)
             echo "Unsupported OS: ${{ matrix.os }}"
@@ -336,6 +336,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
       with:
+        draft: true
         token: ${{ secrets.GITHUB_TOKEN }}
         files: |
           ${{ steps.build-deb.outputs.deb-package }}

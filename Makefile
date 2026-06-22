@@ -12,6 +12,10 @@ COMPLETION_TARGETS := $(foreach target,$(TARGETS),$(foreach type, $(COMPLETIONS)
 
 VERSION := $(shell git describe --tags --dirty 2>/dev/null || echo "unknown")
 
+ifdef NODIRTY
+	VERSION := $(shell git describe --tags --no-abbrev 2>/dev/null || echo "unknown")
+endif
+
 # Cross-compilation support via Zig (for CGO targets: go-sqlite3)
 ZIG    := $(shell which zig 2>/dev/null)
 ZIG_OK := $(if $(ZIG),ok,missing)
@@ -82,7 +86,12 @@ ifdef SYSTRAY
 endif
 
 ifdef CI
-   TAGS += ci
+    TAGS += ci
+endif
+
+ifdef RELEASE
+    TAGS += release
+    BUILD_FLAGS = $(RELEASE_LDFLAGS)
 endif
 
 BROWSER_PLATFORMS := linux darwin freebsd netbsd openbsd windows
