@@ -53,13 +53,13 @@
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Brave-logo.svg" width="60"></a>
   <br>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/linux-gray?logo=linux"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/macOS-gray"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/Windows-0078D6?logo=windows"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/FreeBSD-AB2B28?logo=freebsd"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/NetBSD-FFC000?logo=netbsd"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/OpenBSD-F5C400?logo=openbsd"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/flatpak-blue?logo=flathub"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/snap-orange?logo=snapcraft"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/snap-orange?logo=snapcraft&labelColor=white"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/macOS-white?logo=apple&logoColor=gray"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/Windows-0078D6?logo=data:image/svg%2bxml;base64,ICAgICAgICAgICAgICAgIDxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCA4OCA4OCIgZmlsbD0iI0ZGRkZGRiI+IDxwYXRoIGQ9Ik0wIDBoNDIuNXY0Mi41SDB2LTQyLjV6bTQ1LjUgMEg4OHY0Mi41SDQ1LjVWMHpNMCA0NS41aDQyLjVWODhIMFY0NS41em00NS41IDBIODhWODhINDUuNVY0NS41eiIvPjwvc3ZnPgo="></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/FreeBSD-AB2B28?logo=freebsd"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/NetBSD-gray?logo=netbsd&color=gray"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/OpenBSD-red?logo=openbsd&logoColor=black&labelColor=F5C400"></a>
 </div>
 <p align="center"><small><a href="https://gosuki.net/docs/contributing/browsers" target="_blank"> add your browser</a></small></p>
 
