@@ -1,8 +1,6 @@
 module github.com/blob42/gosuki
 
-go 1.24.0
-
-toolchain go1.24.1
+go 1.26.0
 
 retract v0.0.1 // broken module path
 
@@ -16,6 +14,8 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-ini/ini v1.67.0
 	github.com/gobuffalo/flect v0.3.0
+	github.com/godbus/dbus/v5 v5.0.4
+	github.com/gofrs/flock v0.13.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/go-github/v66 v66.0.0
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
@@ -30,6 +30,7 @@ require (
 	github.com/xlab/treeprint v1.0.0
 	golang.org/x/sys v0.37.0
 	golang.org/x/time v0.14.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -44,8 +45,6 @@ require (
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
-	github.com/godbus/dbus/v5 v5.0.4 // indirect
-	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -69,8 +68,6 @@ require (
 	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

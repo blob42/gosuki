@@ -26,10 +26,12 @@ package gui
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 
 	"github.com/energye/systray"
+	"github.com/godbus/dbus/v5"
 	"github.com/skratchdot/open-golang/open"
 
 	"github.com/blob42/gosuki/internal/gui/icon"
@@ -93,6 +95,22 @@ func DarwinRunSystray(m *manager.Manager) {
 }
 
 func (st *Systray) Run(m manager.UnitManager) {
+	// Guard: energye/systray silently ignores D-Bus connection errors and
+	// panics on nil conn when ExportStatusNotifierItem is called.
+	// In headless environments (containers, no display) there is no session bus.
+	// This check runs synchronously in the unit's goroutine (before spawning
+	// child goroutines) so the manager's recover in runUnit can catch any
+	// unexpected panic, and the unit exits cleanly via Done().
+	if runtime.GOOS == "linux" {
+		conn, err := dbus.ConnectSessionBus()
+		if err != nil {
+			log.Printf("gui: skipping systray: no D-Bus session bus available (%v)", err)
+			<-m.ShouldStop()
+			m.Done()
+			return
+		}
+		conn.Close()
+	}
 
 	onExit := func() {
 		m.RequestShutdown()
