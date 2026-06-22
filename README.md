@@ -37,21 +37,27 @@
 
 
 <div align="center">
+  <!-- Mozilla Firefox Browsers -->
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/Firefox_brand_logo%2C_2019.svg" width="30"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/LibreWolf_icon.svg" width="30"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Waterfox_logo_2019.svg" width="30"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" width="30"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chromium_Logo.svg" width="30"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Brave-logo.svg" width="60"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://avatars.githubusercontent.com/u/165225155?s=200&v=4" width="30"></a>
-  <br>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://qutebrowser.org/icons/qutebrowser.svg" width="30"></a>
-  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/basilisk_hu_9d66460a001b2264.webp" width="30"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/palemoon_hu_926375eb54d69976.webp" width="30"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/icecat_hu_52ad98a42302fd41.webp" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img alt="Zen browser" src="https://avatars.githubusercontent.com/u/165225155?s=200&v=4" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://gosuki.net/images/browsers/basilisk_hu_9d66460a001b2264.webp" width="30"></a>
+  <br>
+  <!-- Chromium Browsers -->
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/2/28/Chromium_Logo.svg" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://qutebrowser.org/icons/qutebrowser.svg" width="30"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/1/1f/Brave-logo.svg" width="60"></a>
   <br>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/linux-gray?logo=linux"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/macOS-gray"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/Windows-0078D6?logo=windows"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/FreeBSD-AB2B28?logo=freebsd"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/NetBSD-FFC000?logo=netbsd"></a>
+  <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/OpenBSD-F5C400?logo=openbsd"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/flatpak-blue?logo=flathub"></a>
   <a href="https://gosuki.net/docs/features/browser-support-matrix/" target="_blank"><img src="https://img.shields.io/badge/snap-orange?logo=snapcraft"></a>
 </div>
@@ -105,7 +111,7 @@
 
 Checkout the [quick start guide](https://gosuki.net/docs/getting_started/quickstart).
 
-Gosuki currently supports Linux and MacOS<sub>beta</sub> . More platforms are [planned](#roadmap).
+Gosuki supports Linux, macOS, Windows, and BSD (FreeBSD, NetBSD, OpenBSD).
 
 ### Packages
 
@@ -113,6 +119,9 @@ Gosuki currently supports Linux and MacOS<sub>beta</sub> . More platforms are [p
 <a href="https://aur.archlinux.org/packages/gosuki-git"><img src="https://img.shields.io/badge/Arch-AUR-blue?logo=archlinux"></a>
 <br>
 <a href="https://git.blob42.xyz/gosuki.net/-/packages/debian/gosuki"><img src="https://img.shields.io/badge/Debian-A81D33?logo=debian"></a>
+<a href="https://git.blob42.xyz/gosuki.net/-/packages/debian/gosuki"><img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu"></a>
+<br>
+<a href="https://github.com/blob42/homebrew-gosuki"><img src="https://img.shields.io/badge/Homebrew-gosuki-FBB040?logo=homebrew&logoColor=white"></a>
 </div>
 
 
@@ -150,6 +159,11 @@ Start GoSuki as a persistent service ([systemd example](contrib/gosuki.service))
 gosuki start
 ```
 This initializes all configured browsers and begins real-time bookmark tracking.
+
+By default the Web UI binds to `127.0.0.1:2025`. Use `--listen` to change the address:
+```bash
+gosuki --listen 0.0.0.0:8080 start
+```
 
 ### Terminal UI (TUI)
 Launch with an interactive terminal interface for real-time parsing overview:
@@ -192,9 +206,11 @@ gosuki --debug=info,chrome=trace
 
 Gosuki monitors the browser's internal bookmark files for changes. It uses the native OS event notification system to detect changes as they happen. This allows it to be fast and efficient, without the need for any plugins or extensions. This architecture makes it possible to load bookmarks from any kind of internet browser, API or program that emits something akin to a bookmark.
 
+Browser definitions are stored in a single YAML file (`pkg/browsers/browsers.yaml`) and code is generated via `make gen`. Adding a new browser only requires adding its paths to this file.
+
 The application maintains a **local** portable database of all tracked bookmarks, accessible via the built-in web UI or CLI.
 
-Curious for more details on the internals ? Checkout the [Architecture](docs/internal/architecture.md) file.
+Curious for more details on the internals ? Checkout the [Architecture](docs/technical/architecture.md) file.
 
 ## Rationale
 
@@ -210,14 +226,13 @@ If you like this project consider starring the repo and [supporting the effort](
 ## Roadmap
 
 - [x] **Multi-device Sync** - [Synchronization between multiple devices](https://gosuki.net/docs/features/multi-device-sync/)
-- [ ] **Archiving** - Archive bookmarks in a portable format for offline access.
-  - [x] Integration with [ArchiveBox][1]
+- [x] **Archiving** - Archive bookmarks with [ArchiveBox][1]
 - [ ] **Linkrot** - Automatically identify broken links and replace with web.archive.org alternatives
 - [ ] **Metadata Refresh** - Automatically clean and update tags/metadata for existing bookmarks
 - [ ] **Management UI** - Self-hosted server node with admin interface.
 - [ ] **Browser Sync** - Push changes back to browsers for consistent bookmark management
-- [ ] **Packaging**: Package for all common Linux distros, MacOS brew and FreeBSD ports
-- [ ] **More Platforms** - FreeBSD, Windows, Android? 
+- [ ] **Packaging** - More distros and FreeBSD ports
+- [ ] **More Platforms** - Android 
 
 ## Support
 
