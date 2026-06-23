@@ -16,7 +16,7 @@ paru install gosuki-git
 
 You can build from the `PKGBUILD` file in `packages/arch/PKGBUILD`
 
-### Debian
+### Ubuntu / Debian
 
 Full instructions at [https://git.blob42.xyz/gosuki.net/-/packages/debian/gosuki](https://git.blob42.xyz/gosuki.net/-/packages/debian/gosuki)
 
@@ -32,6 +32,12 @@ sudo apt update
 To install the package, run the following command:
 ```sh
 sudo apt install gosuki={{.debVersion}}
+```
+
+### macOS (Homebrew)
+
+```bash
+brew install gosuki
 ```
 
 ### From Source
