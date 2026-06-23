@@ -210,7 +210,7 @@ mods/generated_imports.go: mods
 	@go generate ./mods
 
 # Distribution packaging
-ARCH := x86_64
+ARCH := $(shell go env GOARCH)
 
 .PHONY: checksums
 checksums:
