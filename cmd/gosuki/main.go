@@ -179,7 +179,7 @@ func main() {
 }
 
 func init() {
-	if !slices.Contains(build.Tags(), "ci") {
+	if os.Getenv("CI") != "true" {
 		if err := utils.MkGosukiDataDir(); err != nil {
 			log.Fatal(err)
 		}

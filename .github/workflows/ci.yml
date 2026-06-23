@@ -28,8 +28,6 @@ jobs:
             arch: arm64
 
     runs-on: ${{ matrix.runs_on }}
-    env:
-      CI: true
     if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:
@@ -86,8 +84,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    env:
-      CI: true
     if: "!contains(github.event.head_commit.message, 'chore')"
 
     steps:

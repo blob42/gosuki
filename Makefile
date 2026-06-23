@@ -85,9 +85,9 @@ ifdef SYSTRAY
     TAGS += systray
 endif
 
-ifdef CI
-    TAGS += ci
-    TEST_FLAGS = -tags integration
+TEST_TAGS=
+ifdef INTEGRATION
+	TEST_TAGS += integration
 endif
 
 ifdef RELEASE
@@ -226,7 +226,7 @@ testsum:
 ifeq (, $(shell which gotestsum))
 	$(GOINSTALL) gotest.tools/gotestsum@latest
 endif
-	gotestsum -f dots-v2 $(TEST_FLAGS) . ./...
+	gotestsum -f dots-v2 -- -tags "$(TEST_TAGS)" $(TEST_FLAGS) . ./...
 
 
 .PHONY: ci-test
@@ -234,7 +234,7 @@ ci-test:
 ifeq (, $(shell which gotestsum))
 	$(GOINSTALL) gotest.tools/gotestsum@latest
 endif
-	gotestsum -f github-actions -- $(TEST_FLAGS) . ./...
+	gotestsum -f github-actions -- -tags integration $(TEST_FLAGS) . ./...
 
 
 .PHONY: test
