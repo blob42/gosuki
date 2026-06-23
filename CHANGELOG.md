@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [1.4.1]
+
+### Fixed
+
+- `suki`: expand `~` and `$HOME` in database path before opening the database — closes #25
+
 ## [1.4.0] 2026-06-22
 
 ### Added
@@ -165,7 +171,8 @@ creatively named `schema_version`.
 
 Initial public release
 
-[unreleased]: https://github.com/blob42/gosuki/compare/v1.4.0...HEAD
+[unreleased]: https://github.com/blob42/gosuki/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/blob42/gosuki/releases/tag/v1.4.1
 [1.4.0]: https://github.com/blob42/gosuki/releases/tag/v1.4.0
 [1.3.0]: https://github.com/blob42/gosuki/releases/tag/v1.3.0
 [1.2.1]: https://github.com/blob42/gosuki/releases/tag/v1.2.1
