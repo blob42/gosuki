@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Fixed
+
+- `suki`: expand `~` and `$HOME` in database path before opening the database — closes #25
+
 ## [1.4.0] 2026-06-22
 
 ### Added
