@@ -31,6 +31,7 @@ import (
 
 	"github.com/blob42/gosuki/cmd"
 	db "github.com/blob42/gosuki/internal/database"
+	"github.com/blob42/gosuki/internal/utils"
 	"github.com/blob42/gosuki/pkg/build"
 	"github.com/blob42/gosuki/pkg/config"
 	"github.com/blob42/gosuki/pkg/logging"
@@ -85,6 +86,12 @@ Usage examples:
 			return ctx, nil
 		}
 		db.RegisterSqliteHooks()
+		// Expand ~ and $HOME in database path (same as database.Init() in gosuki)
+		expanded, expandErr := utils.ExpandOnly(config.DBPath)
+		if expandErr != nil {
+			return ctx, expandErr
+		}
+		config.DBPath = expanded
 		err := db.InitDiskConn(config.DBPath)
 		if _, isDBErr := err.(db.DBError); isDBErr {
 			fmt.Fprintln(os.Stderr, "Database initialization failed:", err)

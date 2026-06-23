@@ -87,6 +87,7 @@ endif
 
 ifdef CI
     TAGS += ci
+    TEST_FLAGS = -tags integration
 endif
 
 ifdef RELEASE
@@ -100,8 +101,8 @@ BROWSER_DEFS := $(foreach os,$(BROWSER_PLATFORMS),pkg/browsers/defined_browsers_
 # TODO: remove, needed for testing mvsqlite
 # SQLITE3_SHARED_TAGS := $(TAGS) libsqlite3
 
-ifeq ($(origin TEST_FLAGS), environment)
-	override TEST_FLAGS := $(TEST_FLAGS)
+ifeq ($(origin EXTRA_TEST_FLAGS), environment)
+	TEST_FLAGS += $(EXTRA_TEST_FLAGS)
 endif
 
 # shared: TAGS = $(SQLITE3_SHARED_TAGS)
@@ -233,7 +234,7 @@ ci-test:
 ifeq (, $(shell which gotestsum))
 	$(GOINSTALL) gotest.tools/gotestsum@latest
 endif
-	gotestsum -f github-actions $(TEST_FLAGS) . ./...
+	gotestsum -f github-actions -- $(TEST_FLAGS) . ./...
 
 
 .PHONY: test
