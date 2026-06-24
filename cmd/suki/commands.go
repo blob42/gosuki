@@ -138,6 +138,9 @@ func formatPrint(_ context.Context, cmd *cli.Command, marks []*gosuki.Bookmark) 
 }
 
 func listBookmarks(ctx context.Context, cmd *cli.Command) error {
+	if db.DiskDB == nil {
+		panic("nil db handle")
+	}
 	sortBy, sortAsc := parseSortFlag(cmd.String("sort"))
 	pageParms := db.PaginationParams{
 		Page:    1,
