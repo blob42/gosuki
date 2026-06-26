@@ -37,7 +37,11 @@ sudo apt install gosuki={{.debVersion}}
 ### macOS (Homebrew)
 
 ```bash
-brew install gosuki
+brew tap blob42/gosuki
+brew install blob42/gosuki/gosuki
+
+# OR with system tray
+brew install --cask blob42/gosuki/gosuki-app
 ```
 
 ### From Source
