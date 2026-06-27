@@ -6,6 +6,11 @@ on:
     tags:
       - "v*.*.*" # Triggers on tags like v1.0.0
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.0.0). Required when triggered manually.'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -50,14 +55,19 @@ jobs:
       with:
         lfs: true
         fetch-depth: 0
+        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
 
     - name: Set Release Version
       id: version
       shell: bash
       run: |
-        ver=${GITHUB_REF##*/}
+        ver=$(git describe --tags --abbrev=0)
+        if [[ -z "$ver" ]]; then
+          echo "Error: No tags found. Make sure the checkout ref points to a valid tag."
+          exit 1
+        fi
         if [[ ! "$ver" =~ ^v[0-9]+(\.[0-9]+){2}(-rc[0-9]+)?$ ]]; then
-          echo "Error: Tag format is invalid. Expected format: vX.X.X or vX.X.X-rcX"
+          echo "Error: Tag '$ver' has an invalid format. Expected: vX.X.X or vX.X.X-rcX"
           exit 1
         fi
 
@@ -225,8 +235,9 @@ jobs:
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
-      if: github.ref_type == 'tag'
+      if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
       with:
+        tag_name: ${{ env.RELEASE_VERSION }}
         name: ${{ env.RELEASE_VERSION }}
         # body: |
         #   Automated release from CI
@@ -254,6 +265,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         fetch-depth: 0
+        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
 
     - name: Download build artifacts
       uses: actions/download-artifact@v5
@@ -338,8 +350,9 @@ jobs:
 
     - name: Update GitHub Release
       uses: softprops/action-gh-release@v2
-      if: github.ref_type == 'tag'
+      if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
       with:
+        tag_name: ${{ needs.release.outputs.release-version }}
         draft: true
         token: ${{ secrets.GITHUB_TOKEN }}
         files: |
