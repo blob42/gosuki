@@ -176,9 +176,15 @@ jobs:
 
         cd $dist_dir
 
-        archive=$dist_dir/$name.tar.gz
-        tar -czf $archive *
-        echo "archive=dist/$name.tar.gz" >> $GITHUB_OUTPUT
+        if [[ "${{ matrix.os }}" == "windows" ]]; then
+          archive=$dist_dir/$name.zip
+          zip -r $archive *
+          echo "archive=dist/$name.zip" >> $GITHUB_OUTPUT
+        else
+          archive=$dist_dir/$name.tar.gz
+          tar -czf $archive *
+          echo "archive=dist/$name.tar.gz" >> $GITHUB_OUTPUT
+        fi
 
     # upload dist artifact
     - name: Save build artifact
