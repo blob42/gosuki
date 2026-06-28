@@ -24,6 +24,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
+
+	"github.com/blob42/gosuki/internal/utils"
 )
 
 /* Schema Versions:
@@ -117,6 +120,20 @@ const (
 		)
 	`
 )
+
+// backupDB creates a copy of the database file before migration.
+// The backup is named gosuki-v<version>.db.bak in the same directory as the database.
+func backupDB(db *DB, version int) error {
+	backupName := fmt.Sprintf("gosuki-v%d.db.bak", version)
+	backupPath := filepath.Join(filepath.Dir(db.filePath), backupName)
+
+	if err := utils.CopyFileToDst(db.filePath, backupPath); err != nil {
+		return DBError{DBName: db.Name, Err: fmt.Errorf("backing up database: %w", err)}
+	}
+
+	log.Info("database backup created", "path", backupPath, "version", version)
+	return nil
+}
 
 func checkDBVersion(db *DB) error {
 	var err error
@@ -216,6 +233,10 @@ func checkDBVersion(db *DB) error {
 	}
 
 	if version < CurrentSchemaVersion {
+		if err = backupDB(db, version); err != nil {
+			return err
+		}
+
 		for version < CurrentSchemaVersion {
 			switch version {
 			case 1:

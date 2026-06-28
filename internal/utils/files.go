@@ -41,11 +41,13 @@ func CopyFileToDst(src string, dst string) error {
 	if err != nil {
 		return err
 	}
+	defer srcFile.Close()
 
-	dstFile, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE, 0644)
+	dstFile, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
+	defer dstFile.Close()
 
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {
