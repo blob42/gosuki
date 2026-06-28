@@ -715,8 +715,8 @@ func NewTUI(
 					key.WithHelp("q/esc", "quit"),
 				),
 				toggleLog: key.NewBinding(
-					key.WithKeys("L"),
-					key.WithHelp("L", "show log"),
+					key.WithKeys("l"),
+					key.WithHelp("l", "show log"),
 				),
 				expand: key.NewBinding(
 					key.WithKeys(" "),
