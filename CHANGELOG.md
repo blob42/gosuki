@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Automatic backup of database before schema migration to protect against data loss.
+- Creates gosuki-v<VERSION>.db.bak in the same directory as the database before migration
+
 ### Changed
 
 - Database and importer now use platform-appropriate data directories via `utils.GetGosukiDataDir()` — Windows uses `%APPDATA%\gosuki`, Linux/BSD retains `~/.local/share/gosuki`
