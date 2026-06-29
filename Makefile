@@ -72,12 +72,12 @@ make_ldflags = $(1) -X $(PKG)/pkg/build.Describe=$(VERSION)
 #https://go.dev/doc/gdb
 # disable gc optimizations
 DEV_GCFLAGS := -gcflags "all=-N -l"
-DEV_LDFLAGS = -ldflags "$(call make_ldflags)"
+DEV_LDFLAGS := -ldflags "$(call make_ldflags)"
 
 #TODO: add optimization flags
 RELEASE_LDFLAGS := -ldflags "$(call make_ldflags, -s -w -buildid=)"
 
-BUILD_FLAGS = $(DEV_GCFLAGS) $(DEV_LDFLAGS)
+BUILD_FLAGS := $(DEV_GCFLAGS) $(DEV_LDFLAGS)
 
 TARGET_TAGS := $(shell go env GOOS) $(shell go env GOARCH)
 TAGS:=
@@ -92,20 +92,15 @@ endif
 
 ifdef RELEASE
     TAGS += release
-    BUILD_FLAGS = $(RELEASE_LDFLAGS)
+    BUILD_FLAGS = -trimpath -mod=readonly -modcacherw $(RELEASE_LDFLAGS)
 endif
 
 BROWSER_PLATFORMS := linux darwin freebsd netbsd openbsd windows
 BROWSER_DEFS := $(foreach os,$(BROWSER_PLATFORMS),pkg/browsers/defined_browsers_$(os).go)
 
-# TODO: remove, needed for testing mvsqlite
-# SQLITE3_SHARED_TAGS := $(TAGS) libsqlite3
-
 ifeq ($(origin EXTRA_TEST_FLAGS), environment)
 	TEST_FLAGS += $(EXTRA_TEST_FLAGS)
 endif
-
-# shared: TAGS = $(SQLITE3_SHARED_TAGS)
 
 .PHONY: all
 all: prepare build
@@ -113,7 +108,6 @@ all: prepare build
 .PHONY: prepare
 prepare:
 	@mkdir -p build
-
 
 .PHONY: build
 build: $(foreach target,$(TARGETS),build/$(target))
@@ -124,7 +118,7 @@ build/%: $(BROWSER_DEFS) $(SRC)
 
 .PHONY: release
 release: TAGS += release
-release: BUILD_FLAGS = $(RELEASE_LDFLAGS)
+release: BUILD_FLAGS = -trimpath -mod=readonly -modcacherw $(RELEASE_LDFLAGS)
 release: build
 
 # Cross-compilation targets (requires zig in PATH)
