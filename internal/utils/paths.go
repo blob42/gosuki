@@ -30,6 +30,9 @@ import (
 	"strings"
 )
 
+// GosukiDirName is the application directory name used across all platforms.
+const GosukiDirName = "gosuki"
+
 func DirExists(path string) (bool, error) {
 	info, err := os.Stat(path)
 	if err != nil {

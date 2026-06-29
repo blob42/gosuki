@@ -24,9 +24,6 @@ package database
 import (
 	"embed"
 	_ "io"
-	"path/filepath"
-
-	"github.com/blob42/gosuki/internal/utils"
 
 	"github.com/gchaincl/dotsql"
 	"github.com/swithek/dotsqlx"
@@ -34,11 +31,11 @@ import (
 
 // Get database directory path
 func GetDBDir() string {
-	dataDir, err := utils.GetDataDir()
+	dbDir, err := getPlatformDBDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return filepath.Join(dataDir, "gosuki")
+	return dbDir
 }
 
 // Loads a dotsql <file> and, wraps it with dotsqlx

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Changed
+
+- Database and importer now use platform-appropriate data directories via `utils.GetGosukiDataDir()` — Windows uses `%APPDATA%\gosuki`, Linux/BSD retains `~/.local/share/gosuki`
+
+### Fixed
+
+- Skip backup for in-memory databases during schema migration (regression when `db.filePath` is empty)
+
 ## [1.4.1]
 
 ### Fixed

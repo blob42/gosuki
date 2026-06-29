@@ -250,14 +250,14 @@ type BookmarksImporterConfig struct {
 }
 
 func setupDefaultImportPath() []string {
-	var dataDir string
+	var gosukiDir string
 	var err error
 
-	if dataDir, err = utils.GetDataDir(); err != nil {
+	if gosukiDir, err = utils.GetGosukiDataDir(); err != nil {
 		log.Fatal(err)
 	}
 
-	importDir := filepath.Join(dataDir, "gosuki/imports")
+	importDir := filepath.Join(gosukiDir, "imports")
 	if err = utils.MkDir(importDir); err != nil {
 		log.Errorf("auto import dir: %s", err)
 	}

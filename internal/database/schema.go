@@ -123,7 +123,12 @@ const (
 
 // backupDB creates a copy of the database file before migration.
 // The backup is named gosuki-v<version>.db.bak in the same directory as the database.
+// Skips backup for in-memory databases.
 func backupDB(db *DB, version int) error {
+	if db.Type == DBTypeInMemory {
+		return nil
+	}
+
 	backupName := fmt.Sprintf("gosuki-v%d.db.bak", version)
 	backupPath := filepath.Join(filepath.Dir(db.filePath), backupName)
 

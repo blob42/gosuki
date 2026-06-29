@@ -439,14 +439,14 @@ type dbConfig struct {
 }
 
 func init() {
-	var dataDir string
+	var dbDir string
 	var err error
 
-	if dataDir, err = utils.GetDataDir(); err != nil {
+	if dbDir, err = getPlatformDBDir(); err != nil {
 		log.Fatal(err)
 	}
 
-	dbPath := filepath.Join(dataDir, "gosuki/gosuki.db")
+	dbPath := filepath.Join(dbDir, DBFileName)
 
 	Config = &dbConfig{
 		SyncInterval: time.Second * 4,

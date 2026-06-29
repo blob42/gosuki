@@ -36,7 +36,6 @@ import (
 
 const (
 	ConfigFileName = "config.toml"
-	ConfigDirName  = "gosuki"
 )
 
 func getDefaultConfigDir() (string, error) {
@@ -48,7 +47,7 @@ func getDefaultConfigDir() (string, error) {
 		return "", errors.New("could not get config dir")
 	}
 
-	configDir = path.Join(configDir, ConfigDirName)
+	configDir = path.Join(configDir, utils.GosukiDirName)
 	return configDir, nil
 }
 
